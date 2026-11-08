@@ -1467,3 +1467,174 @@ a.ph-btn {
   padding: 6px 10px;
   font-size: 16px;
 }
+
+/* ---------- มือถือ: ย่อขนาดโดยรวมให้กระชับขึ้น ---------- */
+@media (max-width: 480px) {
+  .ph-page {
+    padding: 18px 12px 28px;
+  }
+  /* หัวข้อสติกเกอร์ */
+  .ph-title {
+    margin-bottom: 14px;
+  }
+  .ph-stk--top {
+    font-size: 8.6vw;
+  }
+  .ph-stk--bottom {
+    font-size: 11vw;
+  }
+  .ph-subtitle {
+    margin-top: 8px;
+    padding: 1px 16px 4px;
+    font-size: 14px;
+    border-width: 2px;
+  }
+  .ph-title--sm .ph-stk--top {
+    font-size: 22px;
+  }
+  .ph-title--sm .ph-stk--bottom {
+    font-size: 28px;
+  }
+  /* การ์ดและฟอร์ม */
+  .ph-card {
+    padding: 16px 14px;
+    border-radius: 20px;
+  }
+  .ph-form {
+    gap: 12px;
+  }
+  .ph-field > label,
+  .ph-fieldset > legend {
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .ph-input {
+    font-size: 16px; /* ไม่ต่ำกว่า 16px: iPhone จะไม่ซูมเองตอนแตะช่อง */
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+  .ph-btn {
+    font-size: 17px;
+    padding: 10px 16px;
+    border-radius: 12px;
+  }
+  .ph-btn--sm {
+    font-size: 15px;
+    padding: 6px 12px;
+  }
+  .ph-check {
+    font-size: 14px !important;
+  }
+  .ph-error,
+  .ph-note,
+  .ph-alert {
+    font-size: 14px;
+  }
+  /* แถบเลือกคอร์ส */
+  .ph-pill,
+  .ph-choice .ph-pill {
+    --h: 44px;
+  }
+  .ph-pill__badge {
+    border-width: 4px;
+  }
+  /* หน้าแรก / รายการคลิป */
+  .ph-stack {
+    gap: 12px;
+  }
+  .ph-resume {
+    padding: 10px 14px;
+    border-radius: 14px;
+  }
+  .ph-resume__label {
+    font-size: 15px;
+  }
+  .ph-resume__title {
+    font-size: 16px;
+  }
+  .ph-chapter-title {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .ph-chapter-no {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+  .ph-video {
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+  .ph-video__icon {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  .ph-video__title {
+    font-size: 15px;
+  }
+  .ph-video__meta {
+    font-size: 12.5px;
+  }
+  .ph-announce__h {
+    font-size: 17px;
+  }
+  .ph-announce__item {
+    padding: 10px 12px;
+  }
+  .ph-announce__title {
+    font-size: 15.5px;
+  }
+  .ph-announce__body {
+    font-size: 14.5px;
+  }
+  .ph-status {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+  .ph-profile {
+    font-size: 15px;
+  }
+  /* หน้าดูคลิป */
+  .ph-watch {
+    gap: 10px;
+  }
+  .ph-player {
+    border-radius: 14px;
+  }
+  .ph-pbtn,
+  .ph-player__speed {
+    min-width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  .ph-player__time {
+    font-size: 13px;
+  }
+  .ph-player__bigplay {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  .ph-watch__title {
+    font-size: 19px;
+  }
+  .ph-watch__chapter {
+    font-size: 14px;
+  }
+  .ph-dl__btn {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+  .ph-dl__icon {
+    width: 32px;
+    height: 32px;
+  }
+  .ph-footer {
+    font-size: 13px;
+    padding-bottom: 20px;
+  }
+  .ph-footer__links {
+    font-size: 12.5px;
+  }
+}
