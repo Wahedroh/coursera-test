@@ -40,7 +40,7 @@ export async function startSession(c: Ctx, studentId: number): Promise<void> {
 }
 
 /** student id ของ session ปัจจุบัน หรือ null ถ้าไม่มี หมดอายุ หรือถูกเครื่องอื่นแทนที่แล้ว */
-export async function currentStudentId(c: Ctx): Promise<number | null> {
+export async function currentStudentId<E extends { Bindings: Env }>(c: Context<E>): Promise<number | null> {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return null;
   const row = await c.env.DB.prepare("SELECT student_id FROM sessions WHERE id = ?1 AND expires_at > unixepoch()")

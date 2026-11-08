@@ -393,7 +393,7 @@
 .ph-profile dd {
   margin: 0;
   color: var(--navy-d);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* ชื่อเพจท้ายหน้า (อยู่บนพื้นไล่สี) */
@@ -468,6 +468,8 @@ a.ph-btn {
 }
 .ph-btn--sm {
   width: auto;
+  flex: none;
+  white-space: nowrap;
   font-size: 16px;
   padding: 7px 14px;
   border-radius: 10px;
@@ -588,7 +590,7 @@ a.ph-btn {
   font-size: 19px;
 }
 .ph-student__head strong {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .ph-student__info {
   display: grid;
@@ -603,7 +605,7 @@ a.ph-btn {
 }
 .ph-student__info dd {
   margin: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .ph-student__info a {
   color: var(--blue);
@@ -654,4 +656,435 @@ a.ph-btn {
 .ph-pager .ph-btn--ghost {
   border-color: #fff;
   color: #fff;
+}
+
+/* ---------- ช่วยจัดวาง ---------- */
+.ph-stack {
+  display: grid;
+  gap: 16px;
+}
+.ph-grow {
+  flex: 1;
+  min-width: 0;
+}
+.ph-bold {
+  font-weight: 700;
+}
+.ph-center {
+  justify-self: center;
+}
+.ph-error--box {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fde7e4;
+}
+
+/* แถบความคืบหน้า */
+.ph-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: #dfe5ee;
+  overflow: hidden;
+}
+.ph-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--yellow), var(--orange));
+}
+
+/* ---------- หน้ารายการคลิป (นักเรียน) ---------- */
+.ph-resume {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 3px solid #fff;
+  border-radius: 18px;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--blue) 100%);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+}
+.ph-resume__label {
+  color: var(--yellow);
+  font-weight: 800;
+  font-size: 18px;
+}
+.ph-resume__title {
+  font-weight: 700;
+  font-size: 19px;
+}
+.ph-resume .ph-bar {
+  background: rgba(255, 255, 255, 0.25);
+}
+.ph-chapter-title {
+  margin: 0 0 10px;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--navy-d);
+}
+.ph-chapter-no {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--yellow);
+  color: var(--navy-d);
+  font-size: 15px;
+  vertical-align: 2px;
+}
+.ph-videos {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-video {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #dfe5ee;
+  border-radius: 14px;
+  background: #fff;
+  font: inherit;
+  color: var(--navy-d);
+  text-align: left;
+  cursor: pointer;
+}
+.ph-video:hover,
+.ph-video:focus-visible {
+  border-color: var(--blue);
+  outline: none;
+}
+.ph-video__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 15px;
+}
+.ph-video__icon.is-done {
+  background: #2e7d32;
+}
+.ph-video__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.ph-video__title {
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+.ph-video__meta {
+  font-size: 14px;
+  color: #50607a;
+}
+
+/* ---------- หน้าดูคลิป ---------- */
+.ph-watch {
+  display: grid;
+  gap: 14px;
+}
+.ph-watch__top {
+  display: flex;
+}
+.ph-watch__info {
+  display: grid;
+  gap: 10px;
+}
+.ph-watch__chapter {
+  margin: 0;
+  font-weight: 700;
+  color: var(--blue);
+}
+.ph-watch__title {
+  margin: 0;
+  font-size: clamp(20px, 4.5vw, 28px);
+  font-weight: 800;
+  color: var(--navy-d);
+}
+
+/* ---------- ตัวเล่นแบบป้องกัน ---------- */
+.ph-player {
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: var(--card-shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.ph-player__stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.ph-player__frame,
+.ph-player__frame > *,
+.ph-player__frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* ชั้นบังทับทั้งกรอบ: คลิกในกรอบ = เล่น/หยุด ไม่ถึง iframe ของ YouTube */
+.ph-player__shield {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.ph-player__bigplay {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  padding-left: 6px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: rgba(18, 59, 110, 0.85);
+  color: #fff;
+  font-size: 30px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.ph-player__bigplay.is-small {
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+}
+.ph-player__wm {
+  position: absolute;
+  z-index: 3;
+  max-width: 60%;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  font-size: clamp(12px, 2.4vw, 18px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  transition: top 0.8s, left 0.8s;
+}
+.ph-player__error {
+  position: absolute;
+  inset: auto 0 40%;
+  z-index: 4;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  font-weight: 700;
+}
+.ph-player__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--navy-d);
+  color: #fff;
+}
+.ph-pbtn {
+  flex: none;
+  min-width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+}
+.ph-pbtn:disabled {
+  opacity: 0.5;
+}
+.ph-pbtn:focus-visible,
+.ph-player__speed:focus-visible,
+.ph-player__seek:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
+}
+.ph-player__time {
+  flex: none;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.ph-player__seek {
+  flex: 1;
+  min-width: 60px;
+  accent-color: var(--yellow);
+}
+.ph-player__speed {
+  flex: none;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+}
+.ph-player__speed option {
+  color: #000;
+}
+@media (max-width: 480px) {
+  .ph-player__bar {
+    flex-wrap: wrap;
+  }
+  .ph-player__seek {
+    order: -1;
+    flex-basis: 100%;
+  }
+}
+/* เต็มจอ (ทั้ง Fullscreen API และแบบ CSS สำหรับ iPhone) */
+.ph-player:fullscreen,
+.ph-player.is-fs {
+  border-radius: 0;
+}
+.ph-player.is-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.ph-player:fullscreen .ph-player__stage,
+.ph-player.is-fs .ph-player__stage {
+  flex: 1;
+  aspect-ratio: auto;
+}
+
+/* ---------- หลังบ้าน: บทและคลิป ---------- */
+.ph-adminnav {
+  display: flex;
+  gap: 8px;
+  margin: -8px 0 16px;
+}
+.ph-adminnav__link {
+  padding: 6px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.ph-adminnav__link.is-active {
+  background: #fff;
+  color: var(--navy-d);
+}
+.ph-adminnav__link:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.ph-sortable {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-sortable > li.is-dragging {
+  opacity: 0.85;
+  transform: scale(1.01);
+}
+.ph-sortable > li.is-dragging > * {
+  box-shadow: 0 0 0 3px var(--yellow), var(--card-shadow);
+}
+.ph-handle {
+  flex: none;
+  width: 34px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #e6ebf2;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -3px;
+  cursor: grab;
+  touch-action: none;
+}
+.ph-handle:active {
+  cursor: grabbing;
+}
+.ph-handle:focus-visible {
+  outline: 3px solid var(--yellow);
+}
+.ph-chapter {
+  display: grid;
+  gap: 12px;
+}
+.ph-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ph-row-head .ph-chapter-title {
+  margin: 0;
+}
+.ph-vlist {
+  gap: 8px;
+}
+.ph-vrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 2px solid #dfe5ee;
+  border-radius: 12px;
+  background: #fff;
+}
+.ph-thumb {
+  flex: none;
+  width: 96px;
+  height: 54px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #dfe5ee;
+}
+.ph-vrow__body {
+  flex: 1;
+  min-width: 140px;
+  display: grid;
+  gap: 2px;
+  overflow-wrap: break-word;
+}
+.ph-vrow__actions {
+  display: flex;
+  gap: 6px;
+}
+.ph-vrow__edit {
+  flex: 1 1 100%;
+  display: grid;
+  gap: 6px;
+}
+.ph-inline-form {
+  display: grid;
+  gap: 8px;
+}
+.ph-inline-form > label {
+  font-weight: 700;
+  color: var(--navy-d);
+}
+.ph-addvideo {
+  padding-top: 10px;
+  border-top: 1px dashed #c9d3e0;
+}
+.ph-addvideo .ph-btn {
+  justify-self: start;
 }

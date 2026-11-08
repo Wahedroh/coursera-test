@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import { admin } from "./routes/admin";
+import { adminContent } from "./routes/adminContent";
 import { auth } from "./routes/auth";
+import { learn } from "./routes/learn";
 import { schools } from "./routes/schools";
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
@@ -21,6 +23,8 @@ app.get("/health", async (c) => {
 
 app.route("/", auth);
 app.route("/", admin);
+app.route("/", adminContent);
+app.route("/", learn);
 app.route("/", schools);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));
