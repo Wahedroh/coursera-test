@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { STATUS_LABELS, type AdminStudent, type AdminStudentList } from "../../shared/admin";
 import { COURSES, PASSWORD_MIN, type Course, type StudentStatus } from "../../shared/validate";
 import { api, ApiError } from "../lib/api";
+import { navigate } from "../lib/router";
 
 type Tab = StudentStatus | "all";
 const TABS: Tab[] = ["pending", "approved", "rejected", "suspended", "all"];
@@ -253,6 +254,9 @@ function StudentCard({ s, act }: { s: AdminStudent; act: (path: string, body: un
         ) : null}
         <button type="button" className="ph-btn ph-btn--sm ph-btn--ghost" disabled={busy} onClick={() => setResetOpen((v) => !v)}>
           ตั้งรหัสผ่านใหม่
+        </button>
+        <button type="button" className="ph-btn ph-btn--sm" onClick={() => navigate(`/admin/students/${s.id}`)}>
+          ประวัติการเรียน
         </button>
       </div>
 

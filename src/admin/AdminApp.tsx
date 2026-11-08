@@ -5,6 +5,7 @@ import { navigate, usePath } from "../lib/router";
 import { AdminLoginPage } from "./AdminLoginPage";
 import { AnnouncementsPage } from "./AnnouncementsPage";
 import { ContentPage } from "./ContentPage";
+import { StudentProgressPage } from "./StudentProgressPage";
 import { StudentsPage } from "./StudentsPage";
 
 type State = "loading" | "guest" | "admin";
@@ -14,6 +15,7 @@ const PAGES = [
   { path: "/admin/content", label: "บทและคลิป" },
   { path: "/admin/announcements", label: "ประกาศ" },
 ] as const;
+const STUDENT_PATH = /^\/admin\/students\/(\d+)$/;
 
 export function AdminApp() {
   const path = usePath();
@@ -28,7 +30,7 @@ export function AdminApp() {
 
   useEffect(() => {
     if (state === "guest" && path !== "/admin/login") navigate("/admin/login", true);
-    if (state === "admin" && !PAGES.some((p) => p.path === path)) navigate("/admin", true);
+    if (state === "admin" && !PAGES.some((p) => p.path === path) && !STUDENT_PATH.test(path)) navigate("/admin", true);
   }, [state, path]);
 
   const unauthorized = useCallback(() => {
@@ -48,28 +50,38 @@ export function AdminApp() {
   return (
     <>
       <div className="ph-adminbar">
-        <StickerTitle top="หลังบ้าน" bottom={PAGES.find((p) => p.path === path)?.label ?? "นักเรียน"} size="sm" />
+        <StickerTitle
+          top="หลังบ้าน"
+          bottom={STUDENT_PATH.test(path) ? "ประวัติการเรียน" : (PAGES.find((p) => p.path === path)?.label ?? "นักเรียน")}
+          size="sm"
+        />
         <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={logout}>
           ออกจากระบบ
         </button>
       </div>
       <nav className="ph-adminnav" aria-label="เมนูหลังบ้าน">
-        {PAGES.map((p) => (
-          <a
-            key={p.path}
-            href={p.path}
-            className={`ph-adminnav__link${path === p.path ? " is-active" : ""}`}
-            aria-current={path === p.path ? "page" : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate(p.path);
-            }}
-          >
-            {p.label}
-          </a>
-        ))}
+        {PAGES.map((p) => {
+          // หน้าประวัติรายคนอยู่ใต้เมนู "นักเรียน"
+          const active = path === p.path || (p.path === "/admin" && STUDENT_PATH.test(path));
+          return (
+            <a
+              key={p.path}
+              href={p.path}
+              className={`ph-adminnav__link${active ? " is-active" : ""}`}
+              aria-current={active ? "page" : undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(p.path);
+              }}
+            >
+              {p.label}
+            </a>
+          );
+        })}
       </nav>
-      {path === "/admin/content" ? (
+      {STUDENT_PATH.test(path) ? (
+        <StudentProgressPage studentId={Number(path.match(STUDENT_PATH)![1])} onUnauthorized={unauthorized} />
+      ) : path === "/admin/content" ? (
         <ContentPage onUnauthorized={unauthorized} />
       ) : path === "/admin/announcements" ? (
         <AnnouncementsPage onUnauthorized={unauthorized} />

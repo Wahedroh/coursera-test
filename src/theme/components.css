@@ -1232,3 +1232,125 @@ a.ph-btn {
   height: 20px;
   accent-color: var(--navy);
 }
+
+/* ---------- ประวัติการเรียน (หลังบ้าน) ---------- */
+.ph-prog-head {
+  display: grid;
+  gap: 10px;
+  color: var(--navy-d);
+}
+.ph-prog-head .ph-student__head {
+  font-size: 22px;
+}
+.ph-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 4px 0 0;
+}
+.ph-stats > div {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid #dfe5ee;
+}
+.ph-stats dt {
+  font-size: 14px;
+  font-weight: 700;
+  color: #50607a;
+}
+.ph-stats dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy-d);
+}
+.ph-prog-chapter {
+  display: grid;
+  gap: 8px;
+}
+.ph-prog-chapter .ph-chapter-title {
+  margin: 0;
+}
+.ph-prog-table {
+  width: 100%;
+  table-layout: fixed; /* ทุกบทใช้ความกว้างคอลัมน์เท่ากัน */
+  border-collapse: collapse;
+  font-size: 15px;
+  color: var(--navy-d);
+}
+.ph-prog-table th,
+.ph-prog-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #dfe5ee;
+  vertical-align: middle;
+}
+.ph-prog-table thead th {
+  font-size: 14px;
+  color: #50607a;
+}
+.ph-prog-table thead th:nth-child(1) { width: 30%; }
+.ph-prog-table thead th:nth-child(2) { width: 18%; }
+.ph-prog-table thead th:nth-child(3) { width: 17%; }
+.ph-prog-table thead th:nth-child(4) { width: 20%; }
+.ph-prog-table thead th:nth-child(5) { width: 15%; }
+.ph-prog-table tbody th {
+  overflow-wrap: break-word;
+}
+.ph-prog-table tbody th {
+  font-weight: 700;
+}
+.ph-prog-table td {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ph-prog-table tr.is-unwatched td,
+.ph-prog-table tr.is-unwatched th {
+  color: #8592a6;
+}
+.ph-prog-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ph-prog-pct .ph-bar {
+  width: 80px;
+}
+/* จอแคบ: แต่ละคลิปเป็นการ์ดเล็ก */
+@media (max-width: 640px) {
+  .ph-prog-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .ph-prog-table,
+  .ph-prog-table tbody,
+  .ph-prog-table tr,
+  .ph-prog-table th,
+  .ph-prog-table td {
+    display: block;
+  }
+  .ph-prog-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid #dfe5ee;
+  }
+  .ph-prog-table th,
+  .ph-prog-table td {
+    padding: 2px 0;
+    border: 0;
+  }
+  .ph-prog-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    white-space: normal;
+  }
+  .ph-prog-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #50607a;
+  }
+}

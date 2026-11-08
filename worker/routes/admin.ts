@@ -1,6 +1,15 @@
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { ADMIN_PAGE_SIZE, isStatus, STATUSES, type AdminStudent, type AdminStudentList } from "../../shared/admin";
+import {
+  ADMIN_PAGE_SIZE,
+  isStatus,
+  STATUSES,
+  type AdminStudent,
+  type AdminStudentList,
+  type ProgressChapter,
+  type StudentProgress,
+} from "../../shared/admin";
+import { percentOf } from "../../shared/content";
 import { isCourse, PASSWORD_MAX, PASSWORD_MIN, type StudentStatus } from "../../shared/validate";
 import { adminIds, endAdminSession, requireAdmin, startAdminSession, type AdminVars } from "../lib/adminSession";
 import { facebookAuthUrl, facebookConfigured, facebookUserFromCode } from "../lib/facebook";
@@ -203,4 +212,64 @@ admin.post("/admin/students/:id/password", async (c) => {
   ]);
   const row = (updated.results as Row[])[0];
   return row ? c.json(toStudent(row)) : c.json({ error: "not_found" }, 404);
+});
+
+// ประวัติการเรียนรายคน: ทุกคลิปในคอร์สของนักเรียน + ความคืบหน้า
+admin.get("/admin/students/:id/progress", async (c) => {
+  const id = studentId(c.req.param("id"));
+  if (!id) return c.json({ error: "not_found" }, 404);
+  const row = await c.env.DB.prepare(`SELECT ${COLUMNS} FROM students WHERE id = ?1`).bind(id).first<Row>();
+  if (!row) return c.json({ error: "not_found" }, 404);
+
+  const [ch, vi] = await c.env.DB.batch([
+    c.env.DB.prepare("SELECT id, title FROM chapters WHERE course = ?1 ORDER BY sort_order, id").bind(row.course),
+    c.env.DB.prepare(
+      `SELECT v.id, v.chapter_id, v.title, v.duration_sec,
+              p.last_position_sec, p.max_position_sec, p.watch_seconds, p.last_watched_at
+       FROM videos v JOIN chapters c ON c.id = v.chapter_id
+       LEFT JOIN progress p ON p.video_id = v.id AND p.student_id = ?2
+       WHERE c.course = ?1 ORDER BY v.sort_order, v.id`,
+    ).bind(row.course, id),
+  ]);
+  const chapters: ProgressChapter[] = (ch.results as { id: number; title: string }[]).map((x) => ({ ...x, videos: [] }));
+  const byId = new Map(chapters.map((x) => [x.id, x]));
+  const summary: StudentProgress["summary"] = {
+    videosTotal: 0,
+    videosStarted: 0,
+    videosCompleted: 0,
+    watchSecondsTotal: 0,
+    lastWatchedAt: null,
+  };
+  type VRow = {
+    id: number;
+    chapter_id: number;
+    title: string;
+    duration_sec: number | null;
+    last_position_sec: number | null;
+    max_position_sec: number | null;
+    watch_seconds: number | null;
+    last_watched_at: number | null;
+  };
+  for (const v of vi.results as VRow[]) {
+    const percent = percentOf(v.max_position_sec ?? 0, v.duration_sec);
+    const watch = v.watch_seconds ?? 0;
+    byId.get(v.chapter_id)?.videos.push({
+      id: v.id,
+      title: v.title,
+      durationSec: v.duration_sec,
+      percent,
+      lastPositionSec: v.last_position_sec,
+      lastWatchedAt: v.last_watched_at,
+      watchSeconds: watch,
+    });
+    summary.videosTotal++;
+    if (v.last_watched_at) summary.videosStarted++;
+    if (percent >= 100) summary.videosCompleted++;
+    summary.watchSecondsTotal += watch;
+    if (v.last_watched_at && (!summary.lastWatchedAt || v.last_watched_at > summary.lastWatchedAt)) {
+      summary.lastWatchedAt = v.last_watched_at;
+    }
+  }
+  const body: StudentProgress = { student: toStudent(row), chapters, summary };
+  return c.json(body);
 });

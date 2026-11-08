@@ -38,3 +38,29 @@ export type AdminStudentList = {
 };
 
 export const ADMIN_PAGE_SIZE = 50;
+
+// ---------- ประวัติการเรียนรายคน ----------
+
+export type ProgressVideo = {
+  id: number;
+  title: string;
+  durationSec: number | null;
+  /** 0–100 */
+  percent: number;
+  lastPositionSec: number | null;
+  /** unix seconds; null = ยังไม่เคยเปิดดู */
+  lastWatchedAt: number | null;
+  watchSeconds: number;
+};
+export type ProgressChapter = { id: number; title: string; videos: ProgressVideo[] };
+export type StudentProgress = {
+  student: AdminStudent;
+  chapters: ProgressChapter[];
+  summary: {
+    videosTotal: number;
+    videosStarted: number;
+    videosCompleted: number;
+    watchSecondsTotal: number;
+    lastWatchedAt: number | null;
+  };
+};
