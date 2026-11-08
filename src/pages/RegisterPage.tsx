@@ -239,7 +239,14 @@ export function RegisterPage({ onRegistered, mode = "password" }: Props) {
               />
               <span>
                 ยินยอมให้เก็บข้อมูล ชื่อ-นามสกุล โรงเรียน เบอร์นักเรียน และเบอร์ผู้ปกครอง
-                เพื่อใช้ยืนยันตัวตนและติดต่อเรื่องการเรียนเท่านั้น
+                เพื่อใช้ยืนยันตัวตนและติดต่อเรื่องการเรียนเท่านั้น ตาม{" "}
+                <a href="/privacy" target="_blank" rel="noopener">
+                  นโยบายความเป็นส่วนตัว
+                </a>{" "}
+                และ{" "}
+                <a href="/terms" target="_blank" rel="noopener">
+                  ข้อตกลงการใช้งาน
+                </a>
               </span>
             </label>
             {errors.consent ? (

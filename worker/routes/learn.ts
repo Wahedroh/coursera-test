@@ -88,7 +88,7 @@ learn.get("/videos/:id", async (c) => {
   // คลิปของคอร์สอื่น = ไม่พบ
   if (i < 0) return c.json({ error: "not_found" }, 404);
   const v = results[i];
-  const { results: docs } = await c.env.DB.prepare(`SELECT ${DOC_COLUMNS} FROM documents d WHERE d.video_id = ?1 ORDER BY d.kind, d.id`)
+  const { results: docs } = await c.env.DB.prepare(`SELECT ${DOC_COLUMNS} FROM documents d WHERE d.video_id = ?1 ORDER BY CASE d.kind WHEN 'handout' THEN 0 ELSE 1 END, d.id`)
     .bind(id)
     .all<DocRow>();
   const body: WatchVideo = {

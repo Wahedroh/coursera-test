@@ -40,7 +40,7 @@ async function loadContent(db: D1Database, course: Course): Promise<AdminContent
     db
       .prepare(
         `SELECT ${DOC_COLUMNS} FROM documents d JOIN videos v ON v.id = d.video_id
-         JOIN chapters c ON c.id = v.chapter_id WHERE c.course = ?1 ORDER BY d.kind, d.id`,
+         JOIN chapters c ON c.id = v.chapter_id WHERE c.course = ?1 ORDER BY CASE d.kind WHEN 'handout' THEN 0 ELSE 1 END, d.id`,
       )
       .bind(course),
   ]);
