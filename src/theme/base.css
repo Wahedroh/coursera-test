@@ -1,0 +1,23 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  min-height: 100dvh;
+  font-family: var(--font-main);
+  font-weight: 400;
+  color: var(--navy);
+  background: var(--navy) var(--bg-gradient) fixed;
+  -webkit-font-smoothing: antialiased;
+}
+#root {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
