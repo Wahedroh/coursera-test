@@ -25,9 +25,27 @@ export function parseYouTubeId(input: string): string | null {
 
 export const TITLE_MAX = 200;
 
+// ---------- เอกสาร PDF ----------
+
+export const DOC_KINDS = { handout: "เอกสารประกอบ", class_notes: "เอกสารที่เขียนในห้อง" } as const;
+export type DocKind = keyof typeof DOC_KINDS;
+export const DOC_MAX_BYTES = 10 * 1024 * 1024; // 10MB
+
+export function isDocKind(v: unknown): v is DocKind {
+  return typeof v === "string" && Object.prototype.hasOwnProperty.call(DOC_KINDS, v);
+}
+
+export type DocumentInfo = { id: number; kind: DocKind; filename: string; sizeBytes: number };
+
 // ---------- หลังบ้าน ----------
 
-export type AdminVideo = { id: number; title: string; youtubeId: string; durationSec: number | null };
+export type AdminVideo = {
+  id: number;
+  title: string;
+  youtubeId: string;
+  durationSec: number | null;
+  documents: DocumentInfo[];
+};
 export type AdminChapter = { id: number; title: string; videos: AdminVideo[] };
 export type AdminContent = { course: Course; chapters: AdminChapter[] };
 
@@ -58,6 +76,7 @@ export type WatchVideo = {
   lastPositionSec: number;
   prevId: number | null;
   nextId: number | null;
+  documents: DocumentInfo[];
 };
 
 export function percentOf(maxPos: number, duration: number | null): number {

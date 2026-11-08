@@ -3,6 +3,7 @@ import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import { admin } from "./routes/admin";
 import { adminContent } from "./routes/adminContent";
+import { announcements } from "./routes/announcements";
 import { auth } from "./routes/auth";
 import { learn } from "./routes/learn";
 import { schools } from "./routes/schools";
@@ -25,6 +26,7 @@ app.route("/", auth);
 app.route("/", admin);
 app.route("/", adminContent);
 app.route("/", learn);
+app.route("/", announcements);
 app.route("/", schools);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));

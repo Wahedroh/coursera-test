@@ -3,6 +3,7 @@ import { StickerTitle } from "../components/StickerTitle";
 import { api } from "../lib/api";
 import { navigate, usePath } from "../lib/router";
 import { AdminLoginPage } from "./AdminLoginPage";
+import { AnnouncementsPage } from "./AnnouncementsPage";
 import { ContentPage } from "./ContentPage";
 import { StudentsPage } from "./StudentsPage";
 
@@ -11,6 +12,7 @@ type State = "loading" | "guest" | "admin";
 const PAGES = [
   { path: "/admin", label: "นักเรียน" },
   { path: "/admin/content", label: "บทและคลิป" },
+  { path: "/admin/announcements", label: "ประกาศ" },
 ] as const;
 
 export function AdminApp() {
@@ -69,6 +71,8 @@ export function AdminApp() {
       </nav>
       {path === "/admin/content" ? (
         <ContentPage onUnauthorized={unauthorized} />
+      ) : path === "/admin/announcements" ? (
+        <AnnouncementsPage onUnauthorized={unauthorized} />
       ) : (
         <StudentsPage onUnauthorized={unauthorized} />
       )}

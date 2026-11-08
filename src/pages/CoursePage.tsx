@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CourseOutline } from "../../shared/content";
 import { COURSES, type Me } from "../../shared/validate";
+import { AnnouncementList } from "../components/AnnouncementList";
 import { Card } from "../components/Card";
 import { StickerTitle } from "../components/StickerTitle";
 import { api, ApiError } from "../lib/api";
@@ -42,6 +43,8 @@ export function CoursePage({ me, onLogout, onAuthError }: Props) {
             </span>
           </button>
         ) : null}
+
+        <AnnouncementList />
 
         {error ? (
           <p className="ph-error" role="alert">

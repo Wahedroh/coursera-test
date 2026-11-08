@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { parseYouTubeId, type AdminChapter, type AdminContent, type AdminVideo } from "../../shared/content";
+import {
+  DOC_KINDS,
+  DOC_MAX_BYTES,
+  parseYouTubeId,
+  type AdminChapter,
+  type AdminContent,
+  type AdminVideo,
+  type DocKind,
+} from "../../shared/content";
 import { COURSES, type Course } from "../../shared/validate";
 import { Sortable } from "../components/Sortable";
 import { api, ApiError } from "../lib/api";
+import { fmtSize, uploadForm } from "../lib/upload";
 
 const fmtDur = (s: number | null) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "ยังไม่ทราบความยาว");
 
@@ -27,12 +36,12 @@ export function ContentPage({ onUnauthorized }: Props) {
     api<AdminContent>(`/admin/content?course=${course}`).then(setData).catch(handle);
   }, [course, handle]);
 
-  /** เรียก API ที่คืนเนื้อหาทั้งคอร์สกลับมา แล้วอัปเดตหน้า (คืน true ถ้าสำเร็จ) */
-  const run = useCallback(
-    async (path: string, body: unknown): Promise<boolean> => {
+  /** รอผลจาก API ที่คืนเนื้อหาทั้งคอร์สกลับมา แล้วอัปเดตหน้า (คืน true ถ้าสำเร็จ) */
+  const apply = useCallback(
+    async (req: Promise<AdminContent>): Promise<boolean> => {
       setError("");
       try {
-        setData(await api<AdminContent>(path, body));
+        setData(await req);
         return true;
       } catch (err) {
         handle(err);
@@ -40,6 +49,12 @@ export function ContentPage({ onUnauthorized }: Props) {
       }
     },
     [handle],
+  );
+  const run = useCallback((path: string, body: unknown) => apply(api<AdminContent>(path, body)), [apply]);
+  const upload = useCallback(
+    (videoId: number, kind: DocKind, file: File) =>
+      apply(uploadForm<AdminContent>(`/admin/videos/${videoId}/documents`, { kind, file })),
+    [apply],
   );
 
   const addChapter = async (e: FormEvent) => {
@@ -80,7 +95,7 @@ export function ContentPage({ onUnauthorized }: Props) {
           getId={(c) => c.id}
           getLabel={(c) => c.title}
           onReorder={(ids) => run("/admin/chapters/reorder", { course, ids })}
-          render={(ch, handleEl) => <ChapterCard ch={ch} handle={handleEl} run={run} />}
+          render={(ch, handleEl) => <ChapterCard ch={ch} handle={handleEl} run={run} upload={upload} />}
         />
       ) : null}
 
@@ -104,8 +119,9 @@ export function ContentPage({ onUnauthorized }: Props) {
 }
 
 type Run = (path: string, body: unknown) => Promise<boolean>;
+type Upload = (videoId: number, kind: DocKind, file: File) => Promise<boolean>;
 
-function ChapterCard({ ch, handle, run }: { ch: AdminChapter; handle: ReactNode; run: Run }) {
+function ChapterCard({ ch, handle, run, upload }: { ch: AdminChapter; handle: ReactNode; run: Run; upload: Upload }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(ch.title);
   const [vTitle, setVTitle] = useState("");
@@ -166,7 +182,7 @@ function ChapterCard({ ch, handle, run }: { ch: AdminChapter; handle: ReactNode;
         getId={(v) => v.id}
         getLabel={(v) => v.title}
         onReorder={(ids) => run(`/admin/chapters/${ch.id}/videos/reorder`, { ids })}
-        render={(v, h) => <VideoRow v={v} handle={h} run={run} />}
+        render={(v, h) => <VideoRow v={v} handle={h} run={run} upload={upload} />}
       />
 
       <form className="ph-inline-form ph-addvideo" onSubmit={addVideo}>
@@ -188,11 +204,12 @@ function ChapterCard({ ch, handle, run }: { ch: AdminChapter; handle: ReactNode;
   );
 }
 
-function VideoRow({ v, handle, run }: { v: AdminVideo; handle: ReactNode; run: Run }) {
+function VideoRow({ v, handle, run, upload }: { v: AdminVideo; handle: ReactNode; run: Run; upload: Upload }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(v.title);
   const [link, setLink] = useState(`https://youtu.be/${v.youtubeId}`);
   const [err, setErr] = useState("");
+  const [docsOpen, setDocsOpen] = useState(false);
 
   return (
     <div className="ph-vrow">
@@ -235,6 +252,9 @@ function VideoRow({ v, handle, run }: { v: AdminVideo; handle: ReactNode; run: R
             </span>
           </div>
           <div className="ph-vrow__actions">
+            <button type="button" className="ph-btn ph-btn--sm ph-btn--ghost" onClick={() => setDocsOpen((o) => !o)}>
+              เอกสาร ({v.documents.length})
+            </button>
             <button type="button" className="ph-btn ph-btn--sm ph-btn--ghost" onClick={() => setEditing(true)}>
               แก้ไข
             </button>
@@ -252,6 +272,85 @@ function VideoRow({ v, handle, run }: { v: AdminVideo; handle: ReactNode; run: R
           </div>
         </>
       )}
+      {docsOpen ? <DocsPanel v={v} run={run} upload={upload} /> : null}
+    </div>
+  );
+}
+
+function DocsPanel({ v, run, upload }: { v: AdminVideo; run: Run; upload: Upload }) {
+  const [kind, setKind] = useState<DocKind>("handout");
+  const [file, setFile] = useState<File | null>(null);
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [inputKey, setInputKey] = useState(0);
+
+  const send = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!file) return setErr("กรุณาเลือกไฟล์ PDF");
+    if (file.size > DOC_MAX_BYTES) return setErr(`ไฟล์ใหญ่ ${fmtSize(file.size)} เกิน 10MB`);
+    setErr("");
+    setBusy(true);
+    const ok = await upload(v.id, kind, file);
+    setBusy(false);
+    if (ok) {
+      setFile(null);
+      setInputKey((k) => k + 1); // ล้างช่องเลือกไฟล์
+    }
+  };
+
+  return (
+    <div className="ph-docs">
+      {v.documents.length === 0 ? <p className="ph-small ph-m0">ยังไม่มีเอกสาร</p> : null}
+      <ul className="ph-docs__list">
+        {v.documents.map((d) => (
+          <li key={d.id} className="ph-docs__item">
+            <span className="ph-badge ph-badge--pending">{DOC_KINDS[d.kind]}</span>
+            <a href={`/api/admin/documents/${d.id}`} className="ph-docs__name">
+              {d.filename}
+            </a>
+            <span className="ph-small">{fmtSize(d.sizeBytes)}</span>
+            <button
+              type="button"
+              className="ph-btn ph-btn--sm ph-btn--danger"
+              onClick={() => {
+                if (window.confirm(`ลบเอกสาร "${d.filename}"?`)) run(`/admin/documents/${d.id}/delete`, {});
+              }}
+            >
+              ลบ
+            </button>
+          </li>
+        ))}
+      </ul>
+      <form className="ph-docs__form" onSubmit={send}>
+        <select
+          className="ph-input ph-select ph-select--sm"
+          aria-label="ประเภทเอกสาร"
+          value={kind}
+          onChange={(e) => setKind(e.target.value as DocKind)}
+        >
+          {(Object.keys(DOC_KINDS) as DocKind[]).map((k) => (
+            <option key={k} value={k}>
+              {DOC_KINDS[k]}
+            </option>
+          ))}
+        </select>
+        <input
+          key={inputKey}
+          type="file"
+          accept="application/pdf,.pdf"
+          aria-label="เลือกไฟล์ PDF"
+          className="ph-file"
+          onChange={(e) => {
+            setFile(e.target.files?.[0] ?? null);
+            setErr("");
+          }}
+        />
+        <button type="submit" className="ph-btn ph-btn--sm" disabled={busy}>
+          {busy ? "กำลังอัปโหลด…" : "อัปโหลด PDF"}
+        </button>
+        {err ? <p className="ph-error">{err}</p> : null}
+        <p className="ph-small ph-m0">PDF ไม่เกิน 10MB</p>
+      </form>
     </div>
   );
 }

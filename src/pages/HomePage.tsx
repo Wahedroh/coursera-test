@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { COURSES, type Me } from "../../shared/validate";
+import { AnnouncementList } from "../components/AnnouncementList";
 import { Card } from "../components/Card";
 import { StickerTitle } from "../components/StickerTitle";
 import { api } from "../lib/api";
@@ -29,28 +30,31 @@ export function HomePage({ me, onLogout }: Props) {
   return (
     <>
       <StickerTitle top="เรียนย้อนหลัง" bottom="ฟิสิกส์" subtitle={s.subtitle} />
-      <Card>
-        <div className="ph-form">
-          <p className={`ph-status ph-status--${me.status}`} role="status">
-            {s.text}
-          </p>
-          <dl className="ph-profile">
-            <dt>ชื่อ</dt>
-            <dd>
-              {me.firstName} {me.lastName}
-            </dd>
-            <dt>โรงเรียน</dt>
-            <dd>{me.school}</dd>
-            <dt>คอร์ส</dt>
-            <dd>{COURSES[me.course]}</dd>
-            <dt>เบอร์นักเรียน</dt>
-            <dd>{me.studentPhone}</dd>
-          </dl>
-          <button className="ph-btn ph-btn--ghost" type="button" onClick={logout} disabled={busy}>
-            ออกจากระบบ
-          </button>
-        </div>
-      </Card>
+      <div className="ph-stack">
+        <Card>
+          <div className="ph-form">
+            <p className={`ph-status ph-status--${me.status}`} role="status">
+              {s.text}
+            </p>
+            <dl className="ph-profile">
+              <dt>ชื่อ</dt>
+              <dd>
+                {me.firstName} {me.lastName}
+              </dd>
+              <dt>โรงเรียน</dt>
+              <dd>{me.school}</dd>
+              <dt>คอร์ส</dt>
+              <dd>{COURSES[me.course]}</dd>
+              <dt>เบอร์นักเรียน</dt>
+              <dd>{me.studentPhone}</dd>
+            </dl>
+            <button className="ph-btn ph-btn--ghost" type="button" onClick={logout} disabled={busy}>
+              ออกจากระบบ
+            </button>
+          </div>
+        </Card>
+        <AnnouncementList />
+      </div>
     </>
   );
 }

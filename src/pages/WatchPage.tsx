@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import type { WatchVideo } from "../../shared/content";
+import { DOC_KINDS, type WatchVideo } from "../../shared/content";
 import type { Me } from "../../shared/validate";
 import { ProtectedPlayer, type ProgressReport } from "../components/ProtectedPlayer";
 import { api, ApiError } from "../lib/api";
 import { navigate } from "../lib/router";
+import { fmtSize } from "../lib/upload";
 
 type Props = { me: Me; videoId: number; onAuthError: (status: number) => void };
 
@@ -61,6 +62,23 @@ export function WatchPage({ me, videoId, onAuthError }: Props) {
             <p className="ph-watch__chapter">{video.chapterTitle}</p>
             <h1 className="ph-watch__title">{video.title}</h1>
             {startAt > 0 ? <p className="ph-small ph-m0">เล่นต่อจากจุดที่ดูค้างไว้</p> : null}
+            {video.documents.length ? (
+              <div className="ph-dl">
+                {video.documents.map((d) => (
+                  <a key={d.id} className="ph-dl__btn" href={`/api/documents/${d.id}`}>
+                    <span className="ph-dl__icon" aria-hidden="true">
+                      ⬇
+                    </span>
+                    <span className="ph-dl__text">
+                      <span className="ph-bold">ดาวน์โหลด{DOC_KINDS[d.kind]}</span>
+                      <span className="ph-small">
+                        {d.filename} · {fmtSize(d.sizeBytes)}
+                      </span>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            ) : null}
             <div className="ph-actions">
               <button
                 type="button"
