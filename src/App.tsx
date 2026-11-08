@@ -1,40 +1,76 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Me } from "../shared/validate";
 import { PageBackground } from "./components/PageBackground";
-import { StickerTitle } from "./components/StickerTitle";
-import { Card } from "./components/Card";
-import { Pill } from "./components/Pill";
-import { AtomIcon, CradleIcon } from "./components/icons";
+import { api, ApiError } from "./lib/api";
+import { navigate, usePath } from "./lib/router";
+import { HomePage } from "./pages/HomePage";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
 
-type Health = { ok: boolean; tables: number } | null;
+type Auth = { state: "loading" } | { state: "guest"; notice?: string } | { state: "student"; me: Me };
 
-// ระยะที่ 1: หน้าโครงเปล่าสำหรับตรวจธีม + การเชื่อม API/D1/R2
+const KICKED = "บัญชีนี้ถูกเข้าใช้จากเครื่องอื่น หรือหมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่";
+const GUEST_PATHS = ["/login", "/register"];
+
 export function App() {
-  const [health, setHealth] = useState<Health>(null);
-  const [failed, setFailed] = useState(false);
+  const path = usePath();
+  const [auth, setAuth] = useState<Auth>({ state: "loading" });
+  const authRef = useRef(auth);
+  authRef.current = auth;
+
+  const loadMe = useCallback(async () => {
+    try {
+      setAuth({ state: "student", me: await api<Me>("/me") });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        // เคยเข้าอยู่แล้วหลุด = มีเครื่องอื่นเข้าบัญชีนี้ หรือหมดอายุ
+        setAuth({ state: "guest", notice: authRef.current.state === "student" ? KICKED : undefined });
+      } else if (authRef.current.state === "loading") {
+        setAuth({ state: "guest", notice: "เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่" });
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    fetch("/api/health")
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((h: Health) => setHealth(h))
-      .catch(() => setFailed(true));
-  }, []);
+    loadMe();
+    // กลับมาที่แท็บนี้ → ตรวจสถานะใหม่ (เห็นผลครูยืนยัน / รู้ว่าถูกเครื่องอื่นเข้าแทน)
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && authRef.current.state === "student") loadMe();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadMe]);
+
+  // พาไปหน้าที่ถูกต้องตามสถานะการเข้าสู่ระบบ
+  useEffect(() => {
+    if (auth.state === "guest" && !GUEST_PATHS.includes(path)) navigate("/login", true);
+    if (auth.state === "student" && path !== "/") navigate("/", true);
+  }, [auth.state, path]);
+
+  const signedIn = (me: Me) => {
+    setAuth({ state: "student", me });
+    navigate("/", true);
+  };
+
+  let page = null;
+  if (auth.state === "student") {
+    page = <HomePage me={auth.me} onLogout={() => setAuth({ state: "guest" })} />;
+  } else if (auth.state === "guest") {
+    page =
+      path === "/register" ? (
+        <RegisterPage onRegistered={signedIn} />
+      ) : (
+        <LoginPage notice={auth.notice} onLogin={signedIn} />
+      );
+  }
 
   return (
     <>
       <PageBackground />
-      <main className="ph-page">
-        <StickerTitle top="เรียนย้อนหลัง" bottom="ฟิสิกส์" />
-        <Card>
-          <Pill icon={<AtomIcon />} label="คอร์ส" tag="ม.1&2" />
-          <Pill icon={<CradleIcon />} label="คอร์ส" tag="ม.4" />
-          <p className="ph-brand" role="status">
-            {failed ? "เชื่อมต่อระบบไม่ได้" : health ? "ระบบพร้อม" : "กำลังเชื่อมต่อ…"}
-          </p>
-          <p className="ph-brand">
-            เรียนฟิสิกส์ <b>:</b> Physics Head
-          </p>
-        </Card>
-      </main>
+      <main className="ph-page">{page}</main>
+      <footer className="ph-footer">
+        เรียนฟิสิกส์ <b>:</b> Physics Head
+      </footer>
     </>
   );
 }

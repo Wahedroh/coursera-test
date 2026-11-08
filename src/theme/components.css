@@ -185,3 +185,229 @@
   color: var(--orange);
   font-weight: 800;
 }
+
+/* ---------- ฟอร์ม ---------- */
+.ph-form {
+  display: grid;
+  gap: 16px;
+}
+.ph-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ph-field {
+  min-width: 0;
+}
+.ph-field > label,
+.ph-fieldset > legend {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--navy-d);
+}
+.ph-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ph-input {
+  width: 100%;
+  font: inherit;
+  font-size: 18px;
+  padding: 10px 14px;
+  border: 2px solid #c9d3e0;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--navy-d);
+}
+.ph-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(29, 98, 166, 0.25);
+}
+.ph-input[aria-invalid="true"] {
+  border-color: #c62828;
+}
+.ph-error {
+  margin: 6px 0 0;
+  color: #c62828;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ph-alert {
+  margin: 0;
+  padding: 10px 14px;
+  border: 2px solid var(--yellow);
+  border-radius: 12px;
+  background: #fff4d6;
+  color: var(--navy-d);
+  font-weight: 600;
+}
+.ph-note {
+  margin: 0;
+  text-align: center;
+  color: var(--navy);
+}
+
+/* ปุ่ม */
+.ph-btn {
+  width: 100%;
+  font: inherit;
+  font-weight: 800;
+  font-size: 20px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 14px;
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 5px 0 var(--navy-d);
+  cursor: pointer;
+}
+.ph-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--navy-d);
+}
+.ph-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ph-btn:focus-visible,
+.ph-link:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.ph-btn--ghost {
+  background: transparent;
+  color: var(--navy);
+  border: 2px solid var(--navy);
+  box-shadow: none;
+}
+.ph-link {
+  padding: 4px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ph-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.ph-actions--center {
+  justify-content: center;
+}
+
+/* ช่องติ๊ก */
+.ph-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 400 !important;
+  font-size: 16px !important;
+  cursor: pointer;
+}
+.ph-check input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  accent-color: var(--navy);
+}
+
+/* ตัวเลือกคอร์ส (แถบพู่กันกดได้) */
+.ph-choice {
+  position: relative;
+  display: block;
+  /* วงกลมไอคอนสูงกว่าแถบ 22px: เผื่อขอบบน-ล่างไว้ในตัว label */
+  padding: 11px 0;
+  cursor: pointer;
+}
+.ph-choice + .ph-choice {
+  margin-top: 6px;
+}
+.ph-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ph-choice .ph-pill {
+  --h: clamp(48px, 11vw, 72px);
+  margin: 0;
+  max-width: none;
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  transition: opacity 0.15s, filter 0.15s;
+}
+.ph-choice input:checked + .ph-pill {
+  opacity: 1;
+  filter: none;
+}
+.ph-choice input:checked + .ph-pill .ph-pill__badge {
+  border-color: var(--yellow);
+}
+.ph-choice input:focus-visible + .ph-pill {
+  outline: 3px solid var(--yellow);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+.ph-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- หน้าสถานะ ---------- */
+.ph-status {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: center;
+}
+.ph-status--pending { background: #fff4d6; color: var(--navy-d); border: 2px solid var(--yellow); }
+.ph-status--approved { background: #e3f1e6; color: #1b5e20; border: 2px solid #66bb6a; }
+.ph-status--rejected,
+.ph-status--suspended { background: #fde7e4; color: #b3261e; border: 2px solid #ef9a9a; }
+.ph-profile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 17px;
+}
+.ph-profile dt {
+  font-weight: 700;
+  color: var(--navy);
+}
+.ph-profile dd {
+  margin: 0;
+  color: var(--navy-d);
+  overflow-wrap: anywhere;
+}
+
+/* ชื่อเพจท้ายหน้า (อยู่บนพื้นไล่สี) */
+.ph-footer {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0 16px 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: clamp(14px, 3vw, 18px);
+  color: #fff;
+  opacity: 0.9;
+}
+.ph-footer b {
+  color: var(--yellow);
+}

@@ -13,8 +13,16 @@ body {
   font-family: var(--font-main);
   font-weight: 400;
   color: var(--navy);
-  background: var(--navy) var(--bg-gradient) fixed;
+  background: var(--navy);
   -webkit-font-smoothing: antialiased;
+}
+/* พื้นไล่สีติดจอ (ใช้ชั้น fixed แทน background-attachment ที่ iOS ไม่รองรับ) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-gradient);
 }
 #root {
   position: relative;

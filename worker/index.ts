@@ -1,6 +1,13 @@
 import { Hono } from "hono";
+import { csrf } from "hono/csrf";
+import { HTTPException } from "hono/http-exception";
+import { auth } from "./routes/auth";
+import { schools } from "./routes/schools";
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
+
+// กันเว็บอื่นส่งฟอร์มมาที่ API (ตรวจ Origin ของ request ที่เปลี่ยนข้อมูล)
+app.use(csrf());
 
 // ตรวจว่า Worker, D1 และ R2 พร้อมใช้งาน
 app.get("/health", async (c) => {
@@ -11,6 +18,15 @@ app.get("/health", async (c) => {
   return c.json({ ok: true, tables: row?.n ?? 0 });
 });
 
+app.route("/", auth);
+app.route("/", schools);
+
 app.notFound((c) => c.json({ error: "not_found" }, 404));
+
+app.onError((err, c) => {
+  if (err instanceof HTTPException) return err.getResponse();
+  console.error(err);
+  return c.json({ error: "server_error", message: "ระบบขัดข้อง กรุณาลองใหม่" }, 500);
+});
 
 export default app;

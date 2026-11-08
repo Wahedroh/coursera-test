@@ -135,8 +135,9 @@ progress        student_id, video_id, last_position_sec, max_position_sec,
 announcements   id, target ('all'|'m12'|'m4'), title, body, created_at
 ```
 
-- รหัสผ่าน: PBKDF2-SHA256 ผ่าน WebCrypto (สูงสุด 100,000 รอบตามข้อจำกัดของ Workers) + salt ต่อคน
-- Session: cookie `HttpOnly; Secure; SameSite=Lax`; เข้าเครื่องใหม่ = ลบ session เดิม
+- รหัสผ่าน: อย่างน้อย 6 ตัว; เก็บแบบ PBKDF2-SHA256 **20,000 รอบ** + salt ต่อคน (100,000 รอบใช้ CPU ~17ms เกินลิมิต 10ms ของแผนฟรี; จำนวนรอบเก็บในค่าที่บันทึก เพิ่มภายหลังได้)
+- Session: อายุ **30 วัน**, cookie `HttpOnly; Secure; SameSite=Lax`; เข้าเครื่องใหม่ = แทนที่ session เดิม (เครื่องเก่าหลุด)
+- ปีการศึกษา: คำนวณอัตโนมัติตามเวลาไทย — พ.ค.–ธ.ค. = ปี พ.ศ. ปัจจุบัน, ม.ค.–เม.ย. = ปีก่อน
 
 ## 8. API (ร่าง)
 
