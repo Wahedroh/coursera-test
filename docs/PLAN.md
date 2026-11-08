@@ -17,7 +17,7 @@
 | ฐานข้อมูล | Cloudflare D1 |
 | ไฟล์เอกสาร PDF | Cloudflare R2 |
 | หน้าเว็บ | React + Vite |
-| โดเมน | `*.workers.dev` (เปลี่ยนเป็นโดเมนตัวเองได้ภายหลัง) |
+| โดเมน | `*.workers.dev` (เปลี่ยนเป็นโดเมนตัวเองได้ภายหลัง) — ใช้งานจริงที่ https://physicshead-video.wahedroh.workers.dev (Worker `physicshead-video`, build อัตโนมัติจาก branch `claude/student-learning-platform-87z1jh`) |
 | ภาษา | ภาษาไทยอย่างเดียว |
 | อุปกรณ์ | ออกแบบมือถือก่อน (mobile-first) ใช้บนคอมได้ |
 
