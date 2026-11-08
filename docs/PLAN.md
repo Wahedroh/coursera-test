@@ -43,7 +43,7 @@
 
 ### 4.1 สมัคร / เข้าสู่ระบบ
 - **แบบตั้งรหัสเอง**: ชื่อเข้าใช้ = **เบอร์นักเรียน** + รหัสผ่าน
-- **แบบ Google / Facebook**: เข้าครั้งแรกต้องกรอกฟอร์มโปรไฟล์ให้ครบก่อนส่งให้ครูยืนยัน
+- **แบบ Facebook**: เข้าครั้งแรกต้องกรอกฟอร์มโปรไฟล์ให้ครบก่อนส่งให้ครูยืนยัน (ไม่มี Google)
 - ฟอร์มสมัคร:
   - ชื่อ, นามสกุล
   - โรงเรียน — พิมพ์เอง มีรายชื่อโรงเรียนที่เคยกรอกเด้งให้เลือก
@@ -85,7 +85,8 @@
 
 ## 5. ฝั่งครู (หลังบ้าน)
 
-- เข้าด้วย **Google** เท่านั้น อนุญาตเฉพาะอีเมลใน `ADMIN_EMAILS` (ตอนนี้มีครู 1 คน, เพิ่มคนได้ภายหลัง)
+- เข้าด้วย **Facebook** เท่านั้น อนุญาตเฉพาะ Facebook user ID ใน `ADMIN_FACEBOOK_IDS` (ตอนนี้มีครู 1 คน, เพิ่มคนได้ภายหลัง)
+  - Facebook ให้ ID เฉพาะแอป ครูจึงไม่รู้ ID ล่วงหน้า: เข้าครั้งแรกระบบจะแสดง ID ของบัญชีนั้น ให้นำไปใส่ใน `ADMIN_FACEBOOK_IDS`
 
 | เมนู | ทำอะไรได้ |
 |---|---|
@@ -120,11 +121,11 @@
 ```
 students        id, first_name, last_name, school, student_phone (unique), parent_phone,
                 course ('m12' | 'm4'), status ('pending'|'approved'|'rejected'|'suspended'),
-                password_hash (null ถ้าใช้ Google/FB), consent_at, academic_year,
+                password_hash (null ถ้าใช้ Facebook), consent_at, academic_year,
                 created_at, updated_at
-oauth_accounts  id, student_id, provider ('google'|'facebook'), provider_user_id (unique ต่อ provider)
+oauth_accounts  id, student_id, provider ('facebook'), provider_user_id (unique ต่อ provider)
 sessions        id, student_id (unique → 1 เครื่อง/บัญชี), created_at, expires_at
-admin_sessions  id, email, created_at, expires_at
+admin_sessions  id, facebook_user_id, created_at, expires_at
 schools         name (unique)                     -- สำหรับเด้งรายชื่อโรงเรียน
 chapters        id, course, title, sort_order
 videos          id, chapter_id, title, youtube_id, duration_sec, sort_order
@@ -142,7 +143,6 @@ announcements   id, target ('all'|'m12'|'m4'), title, body, created_at
 ```
 POST /api/auth/register            สมัครแบบเบอร์ + รหัส
 POST /api/auth/login               เข้าด้วยเบอร์ + รหัส
-GET  /api/auth/google, /callback   OAuth นักเรียน
 GET  /api/auth/facebook, /callback OAuth นักเรียน
 POST /api/auth/complete-profile    กรอกโปรไฟล์หลัง OAuth ครั้งแรก
 POST /api/auth/logout
@@ -155,7 +155,7 @@ POST /api/videos/:id/progress
 GET  /api/documents/:id            ส่งไฟล์จาก R2 (ตรวจสิทธิ์ก่อน)
 
 /api/admin/*                       (ต้องเป็น admin)
-  auth/google, auth/callback
+  auth/facebook, auth/callback
   students (list/filter), students/:id (status, course, reset-password)
   students/:id/progress
   chapters, videos (CRUD + reorder)
@@ -169,16 +169,15 @@ GET  /api/documents/:id            ส่งไฟล์จาก R2 (ตรว�
 ## 9. หน้าเว็บ
 
 **นักเรียน**: เข้าสู่ระบบ, สมัคร, กรอกโปรไฟล์ (หลัง OAuth), รอยืนยัน/ปฏิเสธ/ระงับ, หน้าแรก (ประกาศ + เรียนต่อ), รายการบท-คลิป, หน้าดูคลิป + เอกสาร
-**ครู**: เข้าสู่ระบบ (Google), นักเรียน, ประวัติการเรียนรายคน, บทและคลิป, ประกาศ, สำรอง/กู้คืน, พื้นที่, ปิดปีการศึกษา
+**ครู**: เข้าสู่ระบบ (Facebook), นักเรียน, ประวัติการเรียนรายคน, บทและคลิป, ประกาศ, สำรอง/กู้คืน, พื้นที่, ปิดปีการศึกษา
 **ทั่วไป**: นโยบายความเป็นส่วนตัว, ข้อตกลงการใช้งาน
 
 ## 10. สิ่งที่ครูต้องเตรียม (ทำเองนอกโค้ด)
 
 1. บัญชี Cloudflare (ใช้แผนฟรี)
-2. **Google OAuth**: สร้าง OAuth Client ใน Google Cloud Console, ตั้ง redirect URL เป็นโดเมน `workers.dev`
-3. **Facebook Login**: สร้างแอปใน Meta for Developers, ใส่ URL นโยบายความเป็นส่วนตัว (Meta บังคับให้มีวิธีขอลบข้อมูลด้วย — ระบุไว้ในหน้านโยบาย), เปลี่ยนแอปเป็นโหมด Live
-4. ตั้งคลิปบน YouTube เป็น **Unlisted** และ **อนุญาตให้ฝัง (embed)**
-5. ค่าลับใส่ผ่าน `wrangler secret` (ไม่เก็บใน repo): `GOOGLE_CLIENT_ID/SECRET`, `FACEBOOK_APP_ID/SECRET`, `SESSION_SECRET`, `ADMIN_EMAILS`
+2. **Facebook Login** (ใช้ทั้งนักเรียนและครู): สร้างแอปใน Meta for Developers, ตั้ง redirect URL เป็นโดเมน `workers.dev`, ใส่ URL นโยบายความเป็นส่วนตัว (Meta บังคับให้มีวิธีขอลบข้อมูลด้วย — ระบุไว้ในหน้านโยบาย), เปลี่ยนแอปเป็นโหมด Live
+3. ตั้งคลิปบน YouTube เป็น **Unlisted** และ **อนุญาตให้ฝัง (embed)**
+4. ค่าลับใส่ผ่าน `wrangler secret` (ไม่เก็บใน repo): `FACEBOOK_APP_ID/SECRET`, `SESSION_SECRET`, `ADMIN_FACEBOOK_IDS`
 
 ## 11. ลำดับการทำ
 
@@ -186,11 +185,11 @@ GET  /api/documents/:id            ส่งไฟล์จาก R2 (ตรว�
 |---|---|
 | 1 | ตั้งโปรเจกต์ Workers + Vite + React, D1 schema/migrations, R2 binding, ธีม Physics Head (โทเคนสี, ฟอนต์, การ์ด, หัวข้อสติกเกอร์) |
 | 2 | สมัคร/เข้าสู่ระบบด้วยเบอร์ + รหัส, session 1 เครื่อง, ฟอร์มตรวจข้อมูล, PDPA, หน้าสถานะรอยืนยัน |
-| 3 | หลังบ้าน: เข้าด้วย Google (admin), จัดการนักเรียน (ยืนยัน/ปฏิเสธ/ระงับ/เปลี่ยนคอร์ส/รีเซ็ตรหัส) |
+| 3 | หลังบ้าน: เข้าด้วย Facebook (admin), จัดการนักเรียน (ยืนยัน/ปฏิเสธ/ระงับ/เปลี่ยนคอร์ส/รีเซ็ตรหัส) |
 | 4 | บทและคลิป (CRUD + ลากเรียง), ตัวเล่นแบบป้องกัน + ลายน้ำ, บันทึกความคืบหน้า + เล่นต่อ |
 | 5 | เอกสาร PDF บน R2 (อัปโหลด/ดาวน์โหลดตรวจสิทธิ์), ประกาศ |
 | 6 | ประวัติการเรียนฝั่งครู |
-| 7 | Google / Facebook Login ฝั่งนักเรียน + กรอกโปรไฟล์ |
+| 7 | Facebook Login ฝั่งนักเรียน + กรอกโปรไฟล์ |
 | 8 | สำรอง CSV/JSON, กู้คืน, หน้าการใช้พื้นที่, ปิดปีการศึกษา |
 | 9 | หน้านโยบาย/ข้อตกลง, ทดสอบบนมือถือ, deploy ขึ้น `workers.dev` |
 

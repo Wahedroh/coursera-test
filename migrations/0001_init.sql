@@ -13,7 +13,7 @@ CREATE TABLE students (
   course         TEXT    NOT NULL CHECK (course IN ('m12', 'm4')),
   status         TEXT    NOT NULL DEFAULT 'pending'
                  CHECK (status IN ('pending', 'approved', 'rejected', 'suspended')),
-  password_hash  TEXT,                       -- NULL เมื่อสมัครด้วย Google / Facebook
+  password_hash  TEXT,                       -- NULL เมื่อสมัครด้วย Facebook
   consent_at     INTEGER NOT NULL,           -- เวลาที่ติ๊กยินยอม PDPA
   academic_year  INTEGER NOT NULL,           -- ปีการศึกษา (พ.ศ.) ใช้กับปุ่มปิดปีการศึกษา
   created_at     INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -25,7 +25,7 @@ CREATE INDEX idx_students_year ON students (academic_year);
 CREATE TABLE oauth_accounts (
   id                INTEGER PRIMARY KEY,
   student_id        INTEGER NOT NULL REFERENCES students (id) ON DELETE CASCADE,
-  provider          TEXT    NOT NULL CHECK (provider IN ('google', 'facebook')),
+  provider          TEXT    NOT NULL CHECK (provider IN ('facebook')),
   provider_user_id  TEXT    NOT NULL,
   UNIQUE (provider, provider_user_id)
 );
@@ -40,9 +40,10 @@ CREATE TABLE sessions (
   expires_at  INTEGER NOT NULL
 );
 
+-- ครูเข้าด้วย Facebook: เก็บ Facebook user ID ของครู (ต้องอยู่ใน ADMIN_FACEBOOK_IDS)
 CREATE TABLE admin_sessions (
-  id          TEXT    PRIMARY KEY,
-  email       TEXT    NOT NULL,
+  id                TEXT    PRIMARY KEY,
+  facebook_user_id  TEXT    NOT NULL,
   created_at  INTEGER NOT NULL DEFAULT (unixepoch()),
   expires_at  INTEGER NOT NULL
 );
