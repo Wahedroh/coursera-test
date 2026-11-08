@@ -12,15 +12,13 @@
     {
       "binding": "DB",
       "database_name": "physicshead-learn",
-      // แทนที่ด้วย id จริงจากคำสั่ง `npx wrangler d1 create physicshead-learn` ก่อน deploy
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "cc48b416-2f05-4252-b73e-fe64f8cd16d9",
       "migrations_dir": "migrations"
     }
   ],
   "r2_buckets": [
     {
       "binding": "FILES",
-      // สร้างด้วย `npx wrangler r2 bucket create physicshead-learn-files` ก่อน deploy
       "bucket_name": "physicshead-learn-files"
     }
   ],
