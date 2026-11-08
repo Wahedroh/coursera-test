@@ -1371,3 +1371,44 @@ a.ph-btn {
   height: 1px;
   background: #c9d3e0;
 }
+
+/* ---------- หน้าข้อมูล (หลังบ้าน) ---------- */
+.ph-meter {
+  display: grid;
+  gap: 6px;
+  color: var(--navy-d);
+}
+.ph-meter__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 15px;
+}
+.ph-meter__bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #dfe5ee;
+  overflow: hidden;
+}
+.ph-meter__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--navy));
+}
+.ph-meter.is-warn .ph-meter__bar > span {
+  background: linear-gradient(90deg, var(--orange), #c62828);
+}
+.ph-close-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.ph-close-grid .ph-field {
+  display: grid;
+  gap: 6px;
+}
+.ph-adminnav {
+  flex-wrap: wrap;
+}

@@ -5,6 +5,7 @@ import { navigate, usePath } from "../lib/router";
 import { AdminLoginPage } from "./AdminLoginPage";
 import { AnnouncementsPage } from "./AnnouncementsPage";
 import { ContentPage } from "./ContentPage";
+import { DataPage } from "./DataPage";
 import { StudentProgressPage } from "./StudentProgressPage";
 import { StudentsPage } from "./StudentsPage";
 
@@ -14,6 +15,7 @@ const PAGES = [
   { path: "/admin", label: "นักเรียน" },
   { path: "/admin/content", label: "บทและคลิป" },
   { path: "/admin/announcements", label: "ประกาศ" },
+  { path: "/admin/data", label: "ข้อมูล" },
 ] as const;
 const STUDENT_PATH = /^\/admin\/students\/(\d+)$/;
 
@@ -83,6 +85,8 @@ export function AdminApp() {
         <StudentProgressPage studentId={Number(path.match(STUDENT_PATH)![1])} onUnauthorized={unauthorized} />
       ) : path === "/admin/content" ? (
         <ContentPage onUnauthorized={unauthorized} />
+      ) : path === "/admin/data" ? (
+        <DataPage onUnauthorized={unauthorized} />
       ) : path === "/admin/announcements" ? (
         <AnnouncementsPage onUnauthorized={unauthorized} />
       ) : (
