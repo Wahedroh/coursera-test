@@ -49,14 +49,31 @@ function useSchoolSuggestions(q: string): string[] {
   return list;
 }
 
-type Props = { onRegistered: (me: Me) => void };
+type Props = {
+  onRegistered: (me: Me) => void;
+  /** "facebook" = กรอกโปรไฟล์หลังเข้าด้วย Facebook ครั้งแรก (ไม่ต้องตั้งรหัสผ่าน) */
+  mode?: "password" | "facebook";
+};
 
-export function RegisterPage({ onRegistered }: Props) {
+export function RegisterPage({ onRegistered, mode = "password" }: Props) {
+  const viaFacebook = mode === "facebook";
   const [form, setForm] = useState<RegisterInput>(EMPTY);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
   const [busy, setBusy] = useState(false);
   const schools = useSchoolSuggestions(form.school);
+  // facebook: null = กำลังตรวจ, false = ไม่มีข้อมูล Facebook ที่พักไว้ (หมดเวลา)
+  const [pending, setPending] = useState<boolean | null>(viaFacebook ? null : true);
+
+  useEffect(() => {
+    if (!viaFacebook) return;
+    api<{ firstName: string; lastName: string }>("/auth/facebook/pending")
+      .then((n) => {
+        setPending(true);
+        setForm((f) => ({ ...f, firstName: f.firstName || n.firstName, lastName: f.lastName || n.lastName }));
+      })
+      .catch(() => setPending(false));
+  }, [viaFacebook]);
 
   function set<K extends keyof RegisterInput>(key: K, value: RegisterInput[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -66,7 +83,7 @@ export function RegisterPage({ onRegistered }: Props) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setServerError("");
-    const { errors: found } = validateRegister(form);
+    const { errors: found } = validateRegister(form, { password: !viaFacebook });
     setErrors(found);
     if (Object.keys(found).length) {
       document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
@@ -74,9 +91,10 @@ export function RegisterPage({ onRegistered }: Props) {
     }
     setBusy(true);
     try {
-      onRegistered(await api<Me>("/auth/register", form));
+      onRegistered(await api<Me>(viaFacebook ? "/auth/facebook/complete" : "/auth/register", form));
     } catch (err) {
       if (err instanceof ApiError && err.body?.fields) setErrors(err.body.fields as FieldErrors);
+      else if (err instanceof ApiError && err.body?.message) setServerError(err.body.message);
       else setServerError("ระบบขัดข้อง กรุณาลองใหม่");
     } finally {
       setBusy(false);
@@ -109,9 +127,30 @@ export function RegisterPage({ onRegistered }: Props) {
 
   return (
     <>
-      <StickerTitle top="เรียนย้อนหลัง" bottom="ฟิสิกส์" subtitle="สมัครเรียน" />
+      <StickerTitle top="เรียนย้อนหลัง" bottom="ฟิสิกส์" subtitle={viaFacebook ? "กรอกข้อมูลให้ครบ" : "สมัครเรียน"} />
       <Card>
+        {viaFacebook && pending === false ? (
+          <div className="ph-form">
+            <p className="ph-alert" role="alert">
+              หมดเวลากรอกข้อมูล กรุณาเข้าสู่ระบบด้วย Facebook อีกครั้ง
+            </p>
+            <a className="ph-btn ph-btn--fb" href="/api/auth/facebook">
+              เข้าสู่ระบบด้วย Facebook
+            </a>
+          </div>
+        ) : null}
+        {viaFacebook && pending !== true ? null : (
         <form className="ph-form" onSubmit={submit} noValidate>
+          {viaFacebook ? (
+            <p className="ph-alert">เชื่อมกับ Facebook แล้ว กรอกข้อมูลด้านล่างให้ครบเพื่อส่งให้ครูยืนยัน</p>
+          ) : (
+            <>
+              <a className="ph-btn ph-btn--fb" href="/api/auth/facebook">
+                สมัครด้วย Facebook
+              </a>
+              <p className="ph-divider">หรือสมัครด้วยเบอร์โทร</p>
+            </>
+          )}
           <div className="ph-row">
             {field("firstName", "ชื่อ")}
             {field("lastName", "นามสกุล")}
@@ -168,6 +207,7 @@ export function RegisterPage({ onRegistered }: Props) {
             ) : null}
           </fieldset>
 
+          {viaFacebook ? null : (
           <div className="ph-field">
             <label htmlFor="password">ตั้งรหัสผ่าน (อย่างน้อย 6 ตัว)</label>
             <input
@@ -186,6 +226,7 @@ export function RegisterPage({ onRegistered }: Props) {
               </p>
             ) : null}
           </div>
+          )}
 
           <div className="ph-field">
             <label className="ph-check">
@@ -214,7 +255,7 @@ export function RegisterPage({ onRegistered }: Props) {
             </p>
           ) : null}
           <button className="ph-btn" type="submit" disabled={busy}>
-            {busy ? "กำลังสมัคร…" : "สมัครเรียน"}
+            {busy ? "กำลังส่ง…" : viaFacebook ? "ส่งข้อมูลให้ครูยืนยัน" : "สมัครเรียน"}
           </button>
           <div className="ph-actions ph-actions--center">
             <span>มีบัญชีแล้ว?</span>
@@ -223,6 +264,7 @@ export function RegisterPage({ onRegistered }: Props) {
             </button>
           </div>
         </form>
+        )}
       </Card>
     </>
   );

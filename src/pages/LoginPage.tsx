@@ -7,12 +7,19 @@ import { navigate } from "../lib/router";
 
 type Props = { notice?: string; onLogin: (me: Me) => void };
 
+const FB_ERRORS: Record<string, string> = {
+  cancelled: "ยกเลิกการเข้าสู่ระบบด้วย Facebook",
+  failed: "เข้าสู่ระบบด้วย Facebook ไม่สำเร็จ กรุณาลองใหม่",
+  config: "ยังเข้าสู่ระบบด้วย Facebook ไม่ได้ในตอนนี้ กรุณาใช้เบอร์และรหัสผ่าน",
+};
+
 export function LoginPage({ notice, onLogin }: Props) {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const fbError = new URLSearchParams(window.location.search).get("fb");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -37,6 +44,15 @@ export function LoginPage({ notice, onLogin }: Props) {
               {notice}
             </p>
           ) : null}
+          {fbError ? (
+            <p className="ph-error" role="alert">
+              {FB_ERRORS[fbError] ?? FB_ERRORS.failed}
+            </p>
+          ) : null}
+          <a className="ph-btn ph-btn--fb" href="/api/auth/facebook">
+            เข้าสู่ระบบด้วย Facebook
+          </a>
+          <p className="ph-divider">หรือใช้เบอร์นักเรียน</p>
           <div className="ph-field">
             <label htmlFor="phone">เบอร์นักเรียน</label>
             <input

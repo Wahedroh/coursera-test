@@ -36,8 +36,14 @@ function text(v: unknown): string {
   return typeof v === "string" ? v.trim().replace(/\s+/g, " ") : "";
 }
 
-/** คืนข้อมูลที่ทำความสะอาดแล้ว และข้อผิดพลาดรายช่อง */
-export function validateRegister(raw: Record<string, unknown>): { data: RegisterInput; errors: FieldErrors } {
+/**
+ * คืนข้อมูลที่ทำความสะอาดแล้ว และข้อผิดพลาดรายช่อง
+ * password: false = สมัครด้วย Facebook (ไม่ต้องตั้งรหัสผ่าน)
+ */
+export function validateRegister(
+  raw: Record<string, unknown>,
+  opts: { password: boolean } = { password: true },
+): { data: RegisterInput; errors: FieldErrors } {
   const data: RegisterInput = {
     firstName: text(raw.firstName),
     lastName: text(raw.lastName),
@@ -58,8 +64,10 @@ export function validateRegister(raw: Record<string, unknown>): { data: Register
   if (!isPhone(data.studentPhone)) e.studentPhone = "เบอร์ต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0";
   if (!isPhone(data.parentPhone)) e.parentPhone = "เบอร์ต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0";
   if (!isCourse(data.course)) e.course = "กรุณาเลือกคอร์ส";
-  if (data.password.length < PASSWORD_MIN) e.password = `รหัสผ่านต้องมีอย่างน้อย ${PASSWORD_MIN} ตัว`;
-  else if (data.password.length > PASSWORD_MAX) e.password = "รหัสผ่านยาวเกินไป";
+  if (opts.password) {
+    if (data.password.length < PASSWORD_MIN) e.password = `รหัสผ่านต้องมีอย่างน้อย ${PASSWORD_MIN} ตัว`;
+    else if (data.password.length > PASSWORD_MAX) e.password = "รหัสผ่านยาวเกินไป";
+  }
   if (!data.consent) e.consent = "กรุณาติ๊กยินยอมก่อนสมัคร";
   return { data, errors: e };
 }

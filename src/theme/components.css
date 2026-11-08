@@ -1354,3 +1354,20 @@ a.ph-btn {
     color: #50607a;
   }
 }
+
+/* เส้นคั่น "หรือ ..." ระหว่างปุ่ม Facebook กับฟอร์ม */
+.ph-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #50607a;
+  font-size: 15px;
+}
+.ph-divider::before,
+.ph-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #c9d3e0;
+}

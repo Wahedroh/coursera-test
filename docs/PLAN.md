@@ -125,6 +125,7 @@ students        id, first_name, last_name, school, student_phone (unique), paren
                 password_hash (null ถ้าใช้ Facebook), consent_at, academic_year,
                 created_at, updated_at
 oauth_accounts  id, student_id, provider ('facebook'), provider_user_id (unique ต่อ provider)
+oauth_pending   id, provider, provider_user_id, display_name, expires_at   -- พักตัวตน Facebook ระหว่างกรอกโปรไฟล์ครั้งแรก (30 นาที)
 sessions        id, student_id (unique → 1 เครื่อง/บัญชี), created_at, expires_at
 admin_sessions  id, facebook_user_id, created_at, expires_at
 schools         name (unique)                     -- สำหรับเด้งรายชื่อโรงเรียน
@@ -177,7 +178,7 @@ GET  /api/documents/:id            ส่งไฟล์จาก R2 (ตรว�
 ## 10. สิ่งที่ครูต้องเตรียม (ทำเองนอกโค้ด)
 
 1. บัญชี Cloudflare (ใช้แผนฟรี)
-2. **Facebook Login** (ใช้ทั้งนักเรียนและครู): สร้างแอปใน Meta for Developers, ตั้ง redirect URL เป็นโดเมน `workers.dev`, ใส่ URL นโยบายความเป็นส่วนตัว (Meta บังคับให้มีวิธีขอลบข้อมูลด้วย — ระบุไว้ในหน้านโยบาย), เปลี่ยนแอปเป็นโหมด Live
+2. **Facebook Login** (ใช้ทั้งนักเรียนและครู): สร้างแอปใน Meta for Developers, ตั้ง redirect URL 2 อัน: `https://<โดเมน>/api/admin/auth/callback` (ครู) และ `https://<โดเมน>/api/auth/facebook/callback` (นักเรียน), ใส่ URL นโยบายความเป็นส่วนตัว (Meta บังคับให้มีวิธีขอลบข้อมูลด้วย — ระบุไว้ในหน้านโยบาย), เปลี่ยนแอปเป็นโหมด Live
 3. ตั้งคลิปบน YouTube เป็น **Unlisted** และ **อนุญาตให้ฝัง (embed)**
 4. ค่าลับใส่ผ่าน `wrangler secret` (ไม่เก็บใน repo): `FACEBOOK_APP_ID/SECRET`, `SESSION_SECRET`, `ADMIN_FACEBOOK_IDS`
 

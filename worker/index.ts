@@ -5,6 +5,7 @@ import { admin } from "./routes/admin";
 import { adminContent } from "./routes/adminContent";
 import { announcements } from "./routes/announcements";
 import { auth } from "./routes/auth";
+import { authFacebook } from "./routes/authFacebook";
 import { learn } from "./routes/learn";
 import { schools } from "./routes/schools";
 
@@ -23,6 +24,7 @@ app.get("/health", async (c) => {
 });
 
 app.route("/", auth);
+app.route("/", authFacebook);
 app.route("/", admin);
 app.route("/", adminContent);
 app.route("/", learn);

@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import { normalizePhone, validateRegister, type Me } from "../../shared/validate";
+import { normalizePhone, validateRegister, type Me, type RegisterInput } from "../../shared/validate";
 import { academicYear } from "../lib/academicYear";
 import { DUMMY_HASH, hashPassword, verifyPassword } from "../lib/password";
 import { currentStudentId, endSession, startSession } from "../lib/session";
 
-type StudentRow = {
+export type StudentRow = {
   id: number;
   first_name: string;
   last_name: string;
@@ -17,7 +17,7 @@ type StudentRow = {
 
 const ME_COLUMNS = "id, first_name, last_name, school, student_phone, parent_phone, course, status";
 
-function toMe(r: StudentRow): Me {
+export function toMe(r: StudentRow): Me {
   return {
     id: r.id,
     firstName: r.first_name,
@@ -30,7 +30,7 @@ function toMe(r: StudentRow): Me {
   };
 }
 
-async function readJson(req: Request): Promise<Record<string, unknown>> {
+export async function readJson(req: Request): Promise<Record<string, unknown>> {
   try {
     const v = await req.json();
     return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
@@ -42,43 +42,48 @@ async function readJson(req: Request): Promise<Record<string, unknown>> {
 export const auth = new Hono<{ Bindings: Env }>();
 
 // สมัครด้วยเบอร์นักเรียน + รหัสผ่าน แล้วเข้าสู่ระบบทันที (สถานะ "รอยืนยัน")
+/**
+ * สร้างนักเรียนใหม่ + จำชื่อโรงเรียน (ใช้ทั้งสมัครด้วยรหัสผ่าน และสมัครด้วย Facebook)
+ * extra = คำสั่งเพิ่มเติมที่ต้องทำใน transaction เดียวกัน (เช่น ผูกบัญชี Facebook)
+ * คืน null ถ้าเบอร์นักเรียนซ้ำ
+ */
+export async function insertStudent(
+  db: D1Database,
+  data: RegisterInput,
+  passwordHash: string | null,
+  extra: D1PreparedStatement[] = [],
+): Promise<StudentRow | null> {
+  const taken = await db.prepare("SELECT 1 FROM students WHERE student_phone = ?1").bind(data.studentPhone).first();
+  if (taken) return null;
+  try {
+    const [inserted] = await db.batch<StudentRow>([
+      db
+        .prepare(
+          `INSERT INTO students (first_name, last_name, school, student_phone, parent_phone, course, password_hash, consent_at, academic_year)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, unixepoch(), ?8)
+           RETURNING ${ME_COLUMNS}`,
+        )
+        .bind(data.firstName, data.lastName, data.school, data.studentPhone, data.parentPhone, data.course, passwordHash, academicYear()),
+      db.prepare("INSERT OR IGNORE INTO schools (name) VALUES (?1)").bind(data.school),
+      ...extra,
+    ]);
+    const row = inserted.results[0];
+    if (!row) throw new Error("insert returned no row");
+    return row;
+  } catch (err) {
+    // สมัครพร้อมกันด้วยเบอร์เดียวกัน
+    if (String(err).includes("UNIQUE constraint failed: students.student_phone")) return null;
+    throw err;
+  }
+}
+
+export const PHONE_TAKEN = { error: "validation", fields: { studentPhone: "เบอร์นี้สมัครแล้ว" } } as const;
+
 auth.post("/auth/register", async (c) => {
   const { data, errors } = validateRegister(await readJson(c.req.raw));
   if (Object.keys(errors).length) return c.json({ error: "validation", fields: errors }, 400);
-
-  const taken = await c.env.DB.prepare("SELECT 1 FROM students WHERE student_phone = ?1").bind(data.studentPhone).first();
-  if (taken) return c.json({ error: "validation", fields: { studentPhone: "เบอร์นี้สมัครแล้ว" } }, 409);
-
-  const passwordHash = await hashPassword(data.password);
-  let row: StudentRow | null;
-  try {
-    const [inserted] = await c.env.DB.batch<StudentRow>([
-      c.env.DB.prepare(
-        `INSERT INTO students (first_name, last_name, school, student_phone, parent_phone, course, password_hash, consent_at, academic_year)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, unixepoch(), ?8)
-         RETURNING ${ME_COLUMNS}`,
-      ).bind(
-        data.firstName,
-        data.lastName,
-        data.school,
-        data.studentPhone,
-        data.parentPhone,
-        data.course,
-        passwordHash,
-        academicYear(),
-      ),
-      c.env.DB.prepare("INSERT OR IGNORE INTO schools (name) VALUES (?1)").bind(data.school),
-    ]);
-    row = inserted.results[0] ?? null;
-  } catch (err) {
-    // สมัครพร้อมกันด้วยเบอร์เดียวกัน
-    if (String(err).includes("UNIQUE constraint failed: students.student_phone")) {
-      return c.json({ error: "validation", fields: { studentPhone: "เบอร์นี้สมัครแล้ว" } }, 409);
-    }
-    throw err;
-  }
-  if (!row) throw new Error("insert returned no row");
-
+  const row = await insertStudent(c.env.DB, data, await hashPassword(data.password));
+  if (!row) return c.json(PHONE_TAKEN, 409);
   await startSession(c, row.id);
   return c.json(toMe(row), 201);
 });
