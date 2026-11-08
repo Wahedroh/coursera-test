@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
+import { admin } from "./routes/admin";
 import { auth } from "./routes/auth";
 import { schools } from "./routes/schools";
 
@@ -19,6 +20,7 @@ app.get("/health", async (c) => {
 });
 
 app.route("/", auth);
+app.route("/", admin);
 app.route("/", schools);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));

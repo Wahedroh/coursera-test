@@ -24,5 +24,12 @@
       "bucket_name": "physicshead-learn-files"
     }
   ],
+  // ค่าที่ไม่ใช่ความลับของ Facebook Login
+  // ค่าลับตั้งด้วย `npx wrangler secret put <ชื่อ>`: FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, ADMIN_FACEBOOK_IDS
+  "vars": {
+    "FACEBOOK_GRAPH_VERSION": "v23.0",
+    "FACEBOOK_DIALOG_URL": "https://www.facebook.com",
+    "FACEBOOK_GRAPH_URL": "https://graph.facebook.com"
+  },
   "observability": { "enabled": true }
 }

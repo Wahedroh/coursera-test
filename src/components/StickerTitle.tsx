@@ -5,12 +5,14 @@ type Props = {
   bottom: string;
   /** ป้ายเล็กใต้หัวข้อ */
   subtitle?: string;
+  /** "sm" = หัวข้อเล็ก สำหรับหน้าหลังบ้าน */
+  size?: "md" | "sm";
 };
 
 /** หัวข้อแบบสติกเกอร์ 2 บรรทัด: ขอบขาวหนา + ขอบกรมนอก + เงา */
-export function StickerTitle({ top, bottom, subtitle }: Props) {
+export function StickerTitle({ top, bottom, subtitle, size = "md" }: Props) {
   return (
-    <h1 className="ph-title">
+    <h1 className={size === "sm" ? "ph-title ph-title--sm" : "ph-title"}>
       <span>
         <span className="ph-stk ph-stk--top" data-t={top}>
           {top}

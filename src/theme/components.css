@@ -411,3 +411,247 @@
 .ph-footer b {
   color: var(--yellow);
 }
+
+/* ---------- หลังบ้านครู ---------- */
+.ph-page--wide {
+  max-width: 1040px;
+}
+.ph-title--sm {
+  margin: 0;
+  text-align: left;
+}
+.ph-title--sm .ph-stk--top {
+  font-size: clamp(26px, 6vw, 40px);
+}
+.ph-title--sm .ph-stk--bottom {
+  font-size: clamp(32px, 7.5vw, 52px);
+}
+.ph-adminbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.ph-admin {
+  display: grid;
+  gap: 14px;
+}
+.ph-m0 {
+  margin: 0;
+}
+.ph-small {
+  font-size: 14px;
+}
+.ph-code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 15px;
+  user-select: all;
+}
+.ph-empty {
+  margin: 0;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--paper);
+  text-align: center;
+  color: var(--navy);
+}
+
+/* ปุ่มเพิ่มเติม */
+a.ph-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+.ph-btn--sm {
+  width: auto;
+  font-size: 16px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 var(--navy-d);
+}
+.ph-btn--sm.ph-btn--ghost {
+  box-shadow: none;
+}
+.ph-btn--fb {
+  background: #1877f2;
+  box-shadow: 0 5px 0 #0b4fa8;
+}
+.ph-btn--ok {
+  background: #2e7d32;
+  box-shadow: 0 3px 0 #1b5e20;
+}
+.ph-btn--danger {
+  background: #c62828;
+  box-shadow: 0 3px 0 #8e1b1b;
+}
+.ph-btn--light {
+  flex: none;
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 3px 0 rgba(4, 18, 40, 0.4);
+}
+
+/* แท็บสถานะ */
+.ph-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.ph-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(11, 42, 82, 0.55);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+.ph-tab.is-active {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: var(--navy-d);
+}
+.ph-tab:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.ph-count {
+  min-width: 26px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--navy-d);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ตัวกรอง */
+.ph-filters {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+@media (max-width: 520px) {
+  .ph-filters {
+    grid-template-columns: 1fr;
+  }
+  .ph-filters .ph-select {
+    width: 100%;
+  }
+}
+.ph-select {
+  width: auto;
+  padding-right: 10px;
+}
+.ph-select--sm {
+  padding: 4px 8px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+/* การ์ดนักเรียน */
+.ph-students {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-student {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f7f7f5, #efefec);
+  box-shadow: 0 8px 22px rgba(5, 20, 45, 0.3);
+  color: var(--navy-d);
+}
+.ph-student__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 19px;
+}
+.ph-student__head strong {
+  overflow-wrap: anywhere;
+}
+.ph-student__info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 15px;
+}
+.ph-student__info dt {
+  font-weight: 700;
+  color: var(--navy);
+}
+.ph-student__info dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ph-student__info a {
+  color: var(--blue);
+  font-weight: 600;
+}
+.ph-student__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ph-badge {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.ph-badge--pending { background: #fff4d6; color: #7a5300; border: 1px solid var(--yellow); }
+.ph-badge--approved { background: #e3f1e6; color: #1b5e20; border: 1px solid #66bb6a; }
+.ph-badge--rejected,
+.ph-badge--suspended { background: #fde7e4; color: #b3261e; border: 1px solid #ef9a9a; }
+.ph-reset {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed #c9d3e0;
+  font-size: 15px;
+}
+.ph-reset label {
+  font-weight: 700;
+}
+.ph-reset__row {
+  display: flex;
+  gap: 8px;
+}
+.ph-reset__row .ph-input {
+  padding: 6px 10px;
+  font-size: 16px;
+}
+.ph-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  font-weight: 700;
+}
+.ph-pager .ph-btn--ghost {
+  border-color: #fff;
+  color: #fff;
+}

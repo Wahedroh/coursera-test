@@ -9,12 +9,12 @@ export const SESSION_TTL_SEC = 60 * 60 * 24 * 30; // 30 วัน
 
 type Ctx = Context<{ Bindings: Env }>;
 
-function randomToken(): string {
+export function randomToken(): string {
   const b = crypto.getRandomValues(new Uint8Array(32));
   return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-async function sha256Hex(s: string): Promise<string> {
+export async function sha256Hex(s: string): Promise<string> {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }

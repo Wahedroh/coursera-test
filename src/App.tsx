@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Me } from "../shared/validate";
-import { PageBackground } from "./components/PageBackground";
 import { api, ApiError } from "./lib/api";
 import { navigate, usePath } from "./lib/router";
 import { HomePage } from "./pages/HomePage";
@@ -64,13 +63,5 @@ export function App() {
       );
   }
 
-  return (
-    <>
-      <PageBackground />
-      <main className="ph-page">{page}</main>
-      <footer className="ph-footer">
-        เรียนฟิสิกส์ <b>:</b> Physics Head
-      </footer>
-    </>
-  );
+  return page;
 }
