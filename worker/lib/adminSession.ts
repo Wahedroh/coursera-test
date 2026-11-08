@@ -2,8 +2,10 @@ import type { Context, MiddlewareHandler } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { randomToken, sha256Hex } from "./session";
 
-// session ครู: เข้าด้วย Facebook และ Facebook user ID ต้องอยู่ใน ADMIN_FACEBOOK_IDS
-// ตรวจรายชื่อซ้ำทุก request: ลบ ID ออกจาก ADMIN_FACEBOOK_IDS = หมดสิทธิ์ทันที
+// session ครู เข้าได้ 2 ทาง:
+// - Facebook: Facebook user ID ต้องอยู่ใน ADMIN_FACEBOOK_IDS (ลบ ID ออก = หมดสิทธิ์ทันที)
+// - รหัสผ่าน: ตรงกับ ADMIN_PASSWORD (เปลี่ยนรหัส = session เดิมที่เข้าด้วยรหัสหมดสิทธิ์ทันที)
+// ตัวตนเก็บในคอลัมน์ facebook_user_id: เลข Facebook ID หรือ "password:<แฮชของรหัสปัจจุบัน>"
 
 export const ADMIN_COOKIE = "asid";
 export const ADMIN_TTL_SEC = 60 * 60 * 24 * 30; // 30 วัน
@@ -16,6 +18,21 @@ export function adminIds(env: Env): string[] {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** ตัวตนของ session ที่เข้าด้วยรหัสผ่าน ผูกกับรหัสปัจจุบัน */
+export async function passwordIdentity(env: Env): Promise<string | null> {
+  if (!env.ADMIN_PASSWORD) return null;
+  return `password:${(await sha256Hex(`physicshead-admin:${env.ADMIN_PASSWORD}`)).slice(0, 32)}`;
+}
+
+/** ตรวจรหัสผ่านครูแบบเวลาคงที่ */
+export async function checkAdminPassword(env: Env, password: string): Promise<boolean> {
+  if (!env.ADMIN_PASSWORD) return false;
+  const enc = new TextEncoder();
+  const a = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(password)));
+  const b = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(env.ADMIN_PASSWORD)));
+  return crypto.subtle.timingSafeEqual(a, b);
 }
 
 export async function startAdminSession(c: Ctx, facebookUserId: string): Promise<void> {
@@ -40,8 +57,10 @@ export async function currentAdminId(c: Ctx): Promise<string | null> {
   )
     .bind(await sha256Hex(token))
     .first<{ facebook_user_id: string }>();
-  if (!row || !adminIds(c.env).includes(row.facebook_user_id)) return null;
-  return row.facebook_user_id;
+  if (!row) return null;
+  const id = row.facebook_user_id;
+  if (id.startsWith("password:")) return id === (await passwordIdentity(c.env)) ? id : null;
+  return adminIds(c.env).includes(id) ? id : null;
 }
 
 export async function endAdminSession(c: Ctx): Promise<void> {

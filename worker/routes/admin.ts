@@ -11,7 +11,15 @@ import {
 } from "../../shared/admin";
 import { percentOf } from "../../shared/content";
 import { isCourse, PASSWORD_MAX, PASSWORD_MIN, type StudentStatus } from "../../shared/validate";
-import { adminIds, endAdminSession, requireAdmin, startAdminSession, type AdminVars } from "../lib/adminSession";
+import {
+  adminIds,
+  checkAdminPassword,
+  endAdminSession,
+  passwordIdentity,
+  requireAdmin,
+  startAdminSession,
+  type AdminVars,
+} from "../lib/adminSession";
 import { facebookAuthUrl, facebookConfigured, facebookUserFromCode } from "../lib/facebook";
 import { hashPassword } from "../lib/password";
 import { randomToken } from "../lib/session";
@@ -62,6 +70,43 @@ admin.get("/admin/auth/callback", async (c) => {
   }
   await startAdminSession(c, fbId);
   return c.redirect("/admin");
+});
+
+// ---------- เข้าสู่ระบบด้วยรหัสผ่าน ----------
+
+const MAX_FAILURES = 10; // ใส่ผิดได้ 10 ครั้ง ต่อ IP ต่อ 15 นาที
+const WINDOW_SEC = 15 * 60;
+
+admin.post("/admin/auth/password", async (c) => {
+  if (!c.env.ADMIN_PASSWORD) {
+    return c.json({ error: "config", message: "ยังไม่ได้ตั้งรหัสผ่านครู (ADMIN_PASSWORD)" }, 503);
+  }
+  const ip = c.req.header("cf-connecting-ip") ?? "local";
+  const db = c.env.DB;
+  const att = await db
+    .prepare("SELECT failures FROM admin_login_attempts WHERE ip = ?1 AND window_start > unixepoch() - ?2")
+    .bind(ip, WINDOW_SEC)
+    .first<{ failures: number }>();
+  if (att && att.failures >= MAX_FAILURES) {
+    return c.json({ error: "too_many", message: "ใส่รหัสผิดหลายครั้งเกินไป กรุณารอ 15 นาที" }, 429);
+  }
+  const body = ((await c.req.json().catch(() => null)) ?? {}) as Record<string, unknown>;
+  const password = typeof body.password === "string" ? body.password : "";
+  if (!(await checkAdminPassword(c.env, password))) {
+    await db
+      .prepare(
+        `INSERT INTO admin_login_attempts (ip, failures, window_start) VALUES (?1, 1, unixepoch())
+         ON CONFLICT (ip) DO UPDATE SET
+           failures = CASE WHEN window_start > unixepoch() - ?2 THEN failures + 1 ELSE 1 END,
+           window_start = CASE WHEN window_start > unixepoch() - ?2 THEN window_start ELSE unixepoch() END`,
+      )
+      .bind(ip, WINDOW_SEC)
+      .run();
+    return c.json({ error: "invalid", message: "รหัสผ่านไม่ถูกต้อง" }, 401);
+  }
+  await db.prepare("DELETE FROM admin_login_attempts WHERE ip = ?1").bind(ip).run();
+  await startAdminSession(c, (await passwordIdentity(c.env))!);
+  return c.json({ ok: true });
 });
 
 admin.post("/admin/logout", async (c) => {

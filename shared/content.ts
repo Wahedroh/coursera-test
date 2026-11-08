@@ -25,17 +25,33 @@ export function parseYouTubeId(input: string): string | null {
 
 export const TITLE_MAX = 200;
 
-// ---------- เอกสาร PDF ----------
+// ---------- เอกสาร (ลิงก์ OneDrive) ----------
 
 export const DOC_KINDS = { handout: "เอกสารประกอบ", class_notes: "เอกสารที่เขียนในห้อง" } as const;
 export type DocKind = keyof typeof DOC_KINDS;
-export const DOC_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 
 export function isDocKind(v: unknown): v is DocKind {
   return typeof v === "string" && Object.prototype.hasOwnProperty.call(DOC_KINDS, v);
 }
 
-export type DocumentInfo = { id: number; kind: DocKind; filename: string; sizeBytes: number };
+export type DocumentInfo = { id: number; kind: DocKind; title: string; url: string };
+
+export const DOC_TITLE_MAX = 150;
+
+/** ลิงก์เอกสารต้องเป็น OneDrive / SharePoint แบบ https */
+export function isOneDriveUrl(input: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(input.trim());
+  } catch {
+    return false;
+  }
+  const h = u.hostname.toLowerCase();
+  return (
+    u.protocol === "https:" &&
+    (h === "1drv.ms" || h === "onedrive.live.com" || h.endsWith(".onedrive.com") || h === "onedrive.com" || h.endsWith(".sharepoint.com"))
+  );
+}
 
 // ---------- หลังบ้าน ----------
 

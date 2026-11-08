@@ -47,7 +47,17 @@ export function AdminApp() {
   };
 
   if (state === "loading") return null;
-  if (state === "guest") return <AdminLoginPage notice={notice} />;
+  if (state === "guest")
+    return (
+      <AdminLoginPage
+        notice={notice}
+        onLogin={() => {
+          setNotice(undefined);
+          setState("admin");
+          navigate("/admin", true);
+        }}
+      />
+    );
 
   return (
     <>

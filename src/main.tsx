@@ -40,6 +40,7 @@ function Root() {
         <nav className="ph-footer__links" aria-label="นโยบาย">
           {link("/privacy", "นโยบายความเป็นส่วนตัว")}
           {link("/terms", "ข้อตกลงการใช้งาน")}
+          {isAdmin ? null : link("/admin", "สำหรับครู")}
         </nav>
       </footer>
     </>

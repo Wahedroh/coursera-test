@@ -3,7 +3,6 @@ import {
   BACKUP_TABLES,
   BACKUP_VERSION,
   D1_FREE_BYTES,
-  R2_FREE_BYTES,
   type Backup,
   type BackupTable,
   type CloseYearCounts,
@@ -15,7 +14,6 @@ import {
 import { percentOf } from "../../shared/content";
 import { COURSES, type Course } from "../../shared/validate";
 import { requireAdmin, type AdminVars } from "../lib/adminSession";
-import { deleteObjects } from "../lib/documents";
 
 // หลังบ้าน: สำรอง / กู้คืน / การใช้พื้นที่ / ปิดปีการศึกษา
 export const maintenance = new Hono<{ Bindings: Env; Variables: AdminVars }>();
@@ -110,7 +108,7 @@ maintenance.get("/admin/backup/progress.csv", async (c) => {
   );
 });
 
-// สำรองทั้งระบบ (ใช้กู้คืน) — มีรหัสผ่านที่เข้ารหัสแล้วด้วย ไม่รวมไฟล์ PDF ใน R2
+// สำรองทั้งระบบ (ใช้กู้คืน) — มีรหัสผ่านที่เข้ารหัสแล้วด้วย
 maintenance.get("/admin/backup/json", async (c) => {
   const names = Object.keys(BACKUP_TABLES) as BackupTable[];
   const res = await c.env.DB.batch(
@@ -193,15 +191,14 @@ maintenance.post("/admin/restore", async (c) => {
 maintenance.get("/admin/usage", async (c) => {
   const r = await c.env.DB.prepare(
     `SELECT (SELECT COUNT(*) FROM students) AS students, (SELECT COUNT(*) FROM videos) AS videos,
-            (SELECT COUNT(*) FROM documents) AS documents, (SELECT COALESCE(SUM(size_bytes), 0) FROM documents) AS doc_bytes,
+            (SELECT COUNT(*) FROM documents) AS documents,
             (SELECT COUNT(*) FROM progress) AS progress, (SELECT COUNT(*) FROM announcements) AS announcements`,
-  ).all<{ students: number; videos: number; documents: number; doc_bytes: number; progress: number; announcements: number }>();
+  ).all<{ students: number; videos: number; documents: number; progress: number; announcements: number }>();
   const row = r.results[0];
   const d1Bytes = r.meta.size_after ?? 0;
   const pct = (a: number, b: number) => Math.round((a / b) * 1000) / 10;
   const body: Usage = {
     d1: { bytes: d1Bytes, limit: D1_FREE_BYTES, percent: pct(d1Bytes, D1_FREE_BYTES) },
-    r2: { bytes: row.doc_bytes, limit: R2_FREE_BYTES, percent: pct(row.doc_bytes, R2_FREE_BYTES), files: row.documents },
     counts: {
       students: row.students,
       videos: row.videos,
@@ -281,10 +278,6 @@ maintenance.post("/admin/close-year", async (c) => {
   const db = c.env.DB;
   const counts = await countClose(db, input);
   const d = docFilter(input);
-  const keys =
-    input.docs === "none"
-      ? []
-      : (await db.prepare(`SELECT d.r2_key ${d.sql}`).bind(...d.args).all<{ r2_key: string }>()).results.map((r) => r.r2_key);
 
   const stmts: D1PreparedStatement[] = [
     // ลบนักเรียน → ประวัติ, session, บัญชี Facebook ที่ผูกไว้ ถูกลบตาม (ON DELETE CASCADE)
@@ -295,6 +288,5 @@ maintenance.post("/admin/close-year", async (c) => {
   if (input.docs !== "none") stmts.push(db.prepare(`DELETE FROM documents WHERE id IN (SELECT d.id ${d.sql})`).bind(...d.args));
   if (input.announcements) stmts.push(db.prepare("DELETE FROM announcements"));
   await db.batch(stmts);
-  await deleteObjects(c.env.FILES, keys);
   return c.json({ ok: true, deleted: counts });
 });

@@ -1,8 +1,17 @@
 import { Hono } from "hono";
-import { DOC_MAX_BYTES, isDocKind, parseYouTubeId, TITLE_MAX, type AdminChapter, type AdminContent, type AdminVideo } from "../../shared/content";
+import {
+  DOC_TITLE_MAX,
+  isDocKind,
+  isOneDriveUrl,
+  parseYouTubeId,
+  TITLE_MAX,
+  type AdminChapter,
+  type AdminContent,
+  type AdminVideo,
+} from "../../shared/content";
 import { isCourse, type Course } from "../../shared/validate";
 import { requireAdmin, type AdminVars } from "../lib/adminSession";
-import { cleanFilename, DOC_COLUMNS, deleteObjects, isPdf, serveDocument, toDocInfo, type DocRow } from "../lib/documents";
+import { DOC_COLUMNS, DOC_ORDER, toDocInfo, type DocRow } from "../lib/documents";
 
 // หลังบ้าน: บทและคลิป
 export const adminContent = new Hono<{ Bindings: Env; Variables: AdminVars }>();
@@ -40,7 +49,7 @@ async function loadContent(db: D1Database, course: Course): Promise<AdminContent
     db
       .prepare(
         `SELECT ${DOC_COLUMNS} FROM documents d JOIN videos v ON v.id = d.video_id
-         JOIN chapters c ON c.id = v.chapter_id WHERE c.course = ?1 ORDER BY CASE d.kind WHEN 'handout' THEN 0 ELSE 1 END, d.id`,
+         JOIN chapters c ON c.id = v.chapter_id WHERE c.course = ?1 ORDER BY ${DOC_ORDER}`,
       )
       .bind(course),
   ]);
@@ -105,19 +114,13 @@ adminContent.post("/admin/chapters/:id", async (c) => {
   return c.json(await loadContent(c.env.DB, course));
 });
 
-// ลบบท = ลบคลิป เอกสาร และความคืบหน้าในบทนั้นด้วย (ON DELETE CASCADE)
+// ลบบท = ลบคลิป ลิงก์เอกสาร และความคืบหน้าในบทนั้นด้วย (ON DELETE CASCADE)
 adminContent.post("/admin/chapters/:id/delete", async (c) => {
   const id = posInt(c.req.param("id"));
   if (!id) return c.json(bad("ไม่พบบท"), 400);
   const course = await chapterCourse(c.env.DB, id);
   if (!course) return c.json({ error: "not_found" }, 404);
-  const { results: files } = await c.env.DB.prepare(
-    "SELECT d.r2_key FROM documents d JOIN videos v ON v.id = d.video_id WHERE v.chapter_id = ?1",
-  )
-    .bind(id)
-    .all<{ r2_key: string }>();
   await c.env.DB.prepare("DELETE FROM chapters WHERE id = ?1").bind(id).run();
-  await deleteObjects(c.env.FILES, files.map((f) => f.r2_key));
   return c.json(await loadContent(c.env.DB, course));
 });
 
@@ -179,42 +182,29 @@ adminContent.post("/admin/videos/:id", async (c) => {
 adminContent.post("/admin/videos/:id/delete", async (c) => {
   const id = posInt(c.req.param("id"));
   if (!id) return c.json(bad("ไม่พบคลิป"), 400);
-  const { results: files } = await c.env.DB.prepare("SELECT r2_key FROM documents WHERE video_id = ?1")
-    .bind(id)
-    .all<{ r2_key: string }>();
   const row = await c.env.DB.prepare("DELETE FROM videos WHERE id = ?1 RETURNING chapter_id").bind(id).first<{ chapter_id: number }>();
   if (!row) return c.json({ error: "not_found" }, 404);
-  await deleteObjects(c.env.FILES, files.map((f) => f.r2_key));
   return c.json(await loadContent(c.env.DB, (await chapterCourse(c.env.DB, row.chapter_id))!));
 });
 
-// ---------- เอกสาร PDF ----------
+// ---------- เอกสาร (ลิงก์ OneDrive) ----------
 
-// อัปโหลด PDF (≤ 10MB) ผูกกับคลิป: multipart/form-data มี file และ kind
+// เพิ่มลิงก์เอกสารให้คลิป: { kind, title, url }
 adminContent.post("/admin/videos/:id/documents", async (c) => {
   const id = posInt(c.req.param("id"));
+  const b = await readJson(c.req.raw);
+  const title = typeof b.title === "string" ? b.title.trim().replace(/\s+/g, " ") : "";
+  const url = typeof b.url === "string" ? b.url.trim() : "";
   if (!id) return c.json(bad("ไม่พบคลิป"), 400);
-  const form = await c.req.formData().catch(() => null);
-  const file = form?.get("file");
-  const kind = form?.get("kind");
-  if (!(file instanceof File) || file.size === 0) return c.json(bad("กรุณาเลือกไฟล์ PDF"), 400);
-  if (!isDocKind(kind)) return c.json(bad("กรุณาเลือกประเภทเอกสาร"), 400);
-  if (file.size > DOC_MAX_BYTES) return c.json(bad("ไฟล์ต้องไม่เกิน 10MB"), 400);
-  if (!(await isPdf(file))) return c.json(bad("รองรับเฉพาะไฟล์ PDF"), 400);
-
+  if (!isDocKind(b.kind)) return c.json(bad("กรุณาเลือกประเภทเอกสาร"), 400);
+  if (!title) return c.json(bad("กรุณาตั้งชื่อเอกสาร"), 400);
+  if (title.length > DOC_TITLE_MAX) return c.json(bad("ชื่อเอกสารยาวเกินไป"), 400);
+  if (!isOneDriveUrl(url) || url.length > 2000) return c.json(bad("ต้องเป็นลิงก์ OneDrive (https://1drv.ms/… หรือ onedrive.live.com)"), 400);
   const v = await c.env.DB.prepare("SELECT chapter_id FROM videos WHERE id = ?1").bind(id).first<{ chapter_id: number }>();
   if (!v) return c.json({ error: "not_found" }, 404);
-
-  const key = `docs/${id}/${crypto.randomUUID()}.pdf`;
-  await c.env.FILES.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: "application/pdf" } });
-  try {
-    await c.env.DB.prepare("INSERT INTO documents (video_id, kind, r2_key, filename, size_bytes) VALUES (?1, ?2, ?3, ?4, ?5)")
-      .bind(id, kind, key, cleanFilename(file.name), file.size)
-      .run();
-  } catch (err) {
-    await c.env.FILES.delete(key);
-    throw err;
-  }
+  await c.env.DB.prepare("INSERT INTO documents (video_id, kind, title, url) VALUES (?1, ?2, ?3, ?4)")
+    .bind(id, b.kind, title, url)
+    .run();
   return c.json(await loadContent(c.env.DB, (await chapterCourse(c.env.DB, v.chapter_id))!), 201);
 });
 
@@ -222,22 +212,10 @@ adminContent.post("/admin/documents/:id/delete", async (c) => {
   const id = posInt(c.req.param("id"));
   if (!id) return c.json(bad("ไม่พบเอกสาร"), 400);
   const row = await c.env.DB.prepare(
-    `DELETE FROM documents WHERE id = ?1
-     RETURNING r2_key, (SELECT chapter_id FROM videos WHERE videos.id = documents.video_id) AS chapter_id`,
+    "DELETE FROM documents WHERE id = ?1 RETURNING (SELECT chapter_id FROM videos WHERE videos.id = documents.video_id) AS chapter_id",
   )
     .bind(id)
-    .first<{ r2_key: string; chapter_id: number }>();
+    .first<{ chapter_id: number }>();
   if (!row) return c.json({ error: "not_found" }, 404);
-  await c.env.FILES.delete(row.r2_key);
   return c.json(await loadContent(c.env.DB, (await chapterCourse(c.env.DB, row.chapter_id))!));
-});
-
-// ครูเปิดดูเอกสาร
-adminContent.get("/admin/documents/:id", async (c) => {
-  const id = posInt(c.req.param("id"));
-  const row = id
-    ? await c.env.DB.prepare("SELECT r2_key, filename FROM documents WHERE id = ?1").bind(id).first<{ r2_key: string; filename: string }>()
-    : null;
-  if (!row) return c.json({ error: "not_found" }, 404);
-  return serveDocument(c.env.FILES, row.r2_key, row.filename);
 });

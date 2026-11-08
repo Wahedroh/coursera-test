@@ -1460,3 +1460,10 @@ a.ph-btn {
   outline: 2px solid var(--yellow);
   outline-offset: 2px;
 }
+.ph-docs__title,
+.ph-docs__url {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 16px;
+}

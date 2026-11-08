@@ -9,10 +9,8 @@ import {
 } from "../../shared/maintenance";
 import { COURSES } from "../../shared/validate";
 import { api, ApiError } from "../lib/api";
-import { fmtSize } from "../lib/upload";
 
-const fmtBytes = (b: number) =>
-  b >= 1024 ** 3 ? `${(b / 1024 ** 3).toFixed(1).replace(/\.0$/, "")} GB` : b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : fmtSize(b);
+const fmtBytes = (b: number) => (b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
 
 type Props = { onUnauthorized: () => void };
 
@@ -63,7 +61,7 @@ export function DataPage({ onUnauthorized }: Props) {
           </a>
         </div>
         <p className="ph-m0 ph-small">
-          ไฟล์ JSON มีข้อมูลส่วนตัวนักเรียนและรหัสผ่านที่เข้ารหัสแล้ว เก็บไว้ในที่ปลอดภัย · ไม่รวมไฟล์ PDF (ต้นฉบับอยู่ในเครื่องครู)
+          ไฟล์ JSON มีข้อมูลส่วนตัวนักเรียนและรหัสผ่านที่เข้ารหัสแล้ว เก็บไว้ในที่ปลอดภัย
         </p>
       </div>
 
@@ -80,14 +78,8 @@ export function DataPage({ onUnauthorized }: Props) {
         {usage ? (
           <>
             <Meter label="ฐานข้อมูล (D1)" used={usage.d1.bytes} limit={usage.d1.limit} percent={usage.d1.percent} />
-            <Meter
-              label={`ไฟล์ PDF (R2) · ${usage.r2.files} ไฟล์`}
-              used={usage.r2.bytes}
-              limit={usage.r2.limit}
-              percent={usage.r2.percent}
-            />
             <p className="ph-m0 ph-small">
-              นักเรียน {usage.counts.students} คน · คลิป {usage.counts.videos} · เอกสาร {usage.counts.documents} · ประวัติการดู{" "}
+              นักเรียน {usage.counts.students} คน · คลิป {usage.counts.videos} · ลิงก์เอกสาร {usage.counts.documents} · ประวัติการดู{" "}
               {usage.counts.progress} แถว · ประกาศ {usage.counts.announcements}
             </p>
           </>
@@ -148,7 +140,7 @@ function RestoreCard({ onDone, onError }: { onDone: (text: string) => void; onEr
     try {
       const data = JSON.parse(await file.text());
       const r = await api<{ counts: Record<string, number> }>("/admin/restore", data);
-      onDone(`กู้คืนสำเร็จ: นักเรียน ${r.counts.students} คน · คลิป ${r.counts.videos} · เอกสาร ${r.counts.documents} · ประกาศ ${r.counts.announcements}`);
+      onDone(`กู้คืนสำเร็จ: นักเรียน ${r.counts.students} คน · คลิป ${r.counts.videos} · ลิงก์เอกสาร ${r.counts.documents} · ประกาศ ${r.counts.announcements}`);
       setFile(null);
       setKey((k) => k + 1);
     } catch (err) {
@@ -214,7 +206,7 @@ function CloseYearCard({
     const scope = course === "all" ? "ทุกคอร์ส" : COURSES[course];
     if (
       !window.confirm(
-        `ปิดปีการศึกษา ${year} (${scope})?\n\nจะลบถาวร:\n- นักเรียน ${preview.students} คน และประวัติการเรียน ${preview.progress} แถว\n- เอกสาร ${preview.documents} ไฟล์\n- ประกาศ ${preview.announcements} รายการ\n\nกู้คืนได้จากไฟล์สำรอง JSON เท่านั้น`,
+        `ปิดปีการศึกษา ${year} (${scope})?\n\nจะลบถาวร:\n- นักเรียน ${preview.students} คน และประวัติการเรียน ${preview.progress} แถว\n- ลิงก์เอกสาร ${preview.documents} รายการ\n- ประกาศ ${preview.announcements} รายการ\n\nกู้คืนได้จากไฟล์สำรอง JSON เท่านั้น`,
       )
     )
       return;
@@ -261,7 +253,7 @@ function CloseYearCard({
             </label>
           </div>
           <fieldset className="ph-fieldset">
-            <legend className="ph-bold">เอกสาร PDF ของคอร์สที่เลือก</legend>
+            <legend className="ph-bold">ลิงก์เอกสารของคอร์สที่เลือก</legend>
             <div className="ph-radios">
               {(
                 [
@@ -283,7 +275,7 @@ function CloseYearCard({
           </label>
           {preview ? (
             <p className="ph-alert ph-m0">
-              จะลบ: นักเรียน {preview.students} คน · ประวัติการเรียน {preview.progress} แถว · เอกสาร {preview.documents} ไฟล์ · ประกาศ{" "}
+              จะลบ: นักเรียน {preview.students} คน · ประวัติการเรียน {preview.progress} แถว · ลิงก์เอกสาร {preview.documents} · ประกาศ{" "}
               {preview.announcements} รายการ
             </p>
           ) : null}

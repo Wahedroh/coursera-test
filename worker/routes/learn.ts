@@ -1,7 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
 import type { Course } from "../../shared/validate";
-import { DOC_COLUMNS, serveDocument, toDocInfo, type DocRow } from "../lib/documents";
+import { DOC_COLUMNS, DOC_ORDER, toDocInfo, type DocRow } from "../lib/documents";
 import { currentStudentId } from "../lib/session";
 
 // ฝั่งนักเรียน: รายการบท-คลิป, ข้อมูลคลิป, บันทึกความคืบหน้า (ต้องเป็นนักเรียนที่ครูยืนยันแล้ว)
@@ -24,7 +24,6 @@ const requireApproved: MiddlewareHandler<{ Bindings: Env; Variables: Vars }> = a
 
 learn.use("/course", requireApproved);
 learn.use("/videos/*", requireApproved);
-learn.use("/documents/*", requireApproved);
 
 type VideoRow = {
   id: number;
@@ -88,7 +87,7 @@ learn.get("/videos/:id", async (c) => {
   // คลิปของคอร์สอื่น = ไม่พบ
   if (i < 0) return c.json({ error: "not_found" }, 404);
   const v = results[i];
-  const { results: docs } = await c.env.DB.prepare(`SELECT ${DOC_COLUMNS} FROM documents d WHERE d.video_id = ?1 ORDER BY CASE d.kind WHEN 'handout' THEN 0 ELSE 1 END, d.id`)
+  const { results: docs } = await c.env.DB.prepare(`SELECT ${DOC_COLUMNS} FROM documents d WHERE d.video_id = ?1 ORDER BY ${DOC_ORDER}`)
     .bind(id)
     .all<DocRow>();
   const body: WatchVideo = {
@@ -143,19 +142,4 @@ learn.post("/videos/:id/progress", async (c) => {
   }
   await c.env.DB.batch(stmts);
   return c.json({ ok: true });
-});
-
-// ดาวน์โหลดเอกสาร: เฉพาะเอกสารของคลิปในคอร์สตัวเอง
-learn.get("/documents/:id", async (c) => {
-  const id = posInt(c.req.param("id"));
-  const row = id
-    ? await c.env.DB.prepare(
-        `SELECT d.r2_key, d.filename FROM documents d JOIN videos v ON v.id = d.video_id
-         JOIN chapters c ON c.id = v.chapter_id WHERE d.id = ?1 AND c.course = ?2`,
-      )
-        .bind(id, c.get("course"))
-        .first<{ r2_key: string; filename: string }>()
-    : null;
-  if (!row) return c.json({ error: "not_found" }, 404);
-  return serveDocument(c.env.FILES, row.r2_key, row.filename);
 });

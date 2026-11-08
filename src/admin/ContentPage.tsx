@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   DOC_KINDS,
-  DOC_MAX_BYTES,
+  DOC_TITLE_MAX,
+  isOneDriveUrl,
   parseYouTubeId,
   type AdminChapter,
   type AdminContent,
@@ -11,7 +12,6 @@ import {
 import { COURSES, type Course } from "../../shared/validate";
 import { Sortable } from "../components/Sortable";
 import { api, ApiError } from "../lib/api";
-import { fmtSize, uploadForm } from "../lib/upload";
 
 const fmtDur = (s: number | null) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "ยังไม่ทราบความยาว");
 
@@ -51,11 +51,7 @@ export function ContentPage({ onUnauthorized }: Props) {
     [handle],
   );
   const run = useCallback((path: string, body: unknown) => apply(api<AdminContent>(path, body)), [apply]);
-  const upload = useCallback(
-    (videoId: number, kind: DocKind, file: File) =>
-      apply(uploadForm<AdminContent>(`/admin/videos/${videoId}/documents`, { kind, file })),
-    [apply],
-  );
+
 
   const addChapter = async (e: FormEvent) => {
     e.preventDefault();
@@ -95,7 +91,7 @@ export function ContentPage({ onUnauthorized }: Props) {
           getId={(c) => c.id}
           getLabel={(c) => c.title}
           onReorder={(ids) => run("/admin/chapters/reorder", { course, ids })}
-          render={(ch, handleEl) => <ChapterCard ch={ch} handle={handleEl} run={run} upload={upload} />}
+          render={(ch, handleEl) => <ChapterCard ch={ch} handle={handleEl} run={run} />}
         />
       ) : null}
 
@@ -119,9 +115,8 @@ export function ContentPage({ onUnauthorized }: Props) {
 }
 
 type Run = (path: string, body: unknown) => Promise<boolean>;
-type Upload = (videoId: number, kind: DocKind, file: File) => Promise<boolean>;
 
-function ChapterCard({ ch, handle, run, upload }: { ch: AdminChapter; handle: ReactNode; run: Run; upload: Upload }) {
+function ChapterCard({ ch, handle, run }: { ch: AdminChapter; handle: ReactNode; run: Run }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(ch.title);
   const [vTitle, setVTitle] = useState("");
@@ -182,7 +177,7 @@ function ChapterCard({ ch, handle, run, upload }: { ch: AdminChapter; handle: Re
         getId={(v) => v.id}
         getLabel={(v) => v.title}
         onReorder={(ids) => run(`/admin/chapters/${ch.id}/videos/reorder`, { ids })}
-        render={(v, h) => <VideoRow v={v} handle={h} run={run} upload={upload} />}
+        render={(v, h) => <VideoRow v={v} handle={h} run={run} />}
       />
 
       <form className="ph-inline-form ph-addvideo" onSubmit={addVideo}>
@@ -204,7 +199,7 @@ function ChapterCard({ ch, handle, run, upload }: { ch: AdminChapter; handle: Re
   );
 }
 
-function VideoRow({ v, handle, run, upload }: { v: AdminVideo; handle: ReactNode; run: Run; upload: Upload }) {
+function VideoRow({ v, handle, run }: { v: AdminVideo; handle: ReactNode; run: Run }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(v.title);
   const [link, setLink] = useState(`https://youtu.be/${v.youtubeId}`);
@@ -272,29 +267,29 @@ function VideoRow({ v, handle, run, upload }: { v: AdminVideo; handle: ReactNode
           </div>
         </>
       )}
-      {docsOpen ? <DocsPanel v={v} run={run} upload={upload} /> : null}
+      {docsOpen ? <DocsPanel v={v} run={run} /> : null}
     </div>
   );
 }
 
-function DocsPanel({ v, run, upload }: { v: AdminVideo; run: Run; upload: Upload }) {
+function DocsPanel({ v, run }: { v: AdminVideo; run: Run }) {
   const [kind, setKind] = useState<DocKind>("handout");
-  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [inputKey, setInputKey] = useState(0);
 
-  const send = async (e: FormEvent) => {
+  const add = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file) return setErr("กรุณาเลือกไฟล์ PDF");
-    if (file.size > DOC_MAX_BYTES) return setErr(`ไฟล์ใหญ่ ${fmtSize(file.size)} เกิน 10MB`);
+    if (!title.trim()) return setErr("กรุณาตั้งชื่อเอกสาร");
+    if (!isOneDriveUrl(url)) return setErr("ต้องเป็นลิงก์ OneDrive (https://1drv.ms/… หรือ onedrive.live.com)");
     setErr("");
     setBusy(true);
-    const ok = await upload(v.id, kind, file);
+    const ok = await run(`/admin/videos/${v.id}/documents`, { kind, title, url: url.trim() });
     setBusy(false);
     if (ok) {
-      setFile(null);
-      setInputKey((k) => k + 1); // ล้างช่องเลือกไฟล์
+      setTitle("");
+      setUrl("");
     }
   };
 
@@ -305,15 +300,14 @@ function DocsPanel({ v, run, upload }: { v: AdminVideo; run: Run; upload: Upload
         {v.documents.map((d) => (
           <li key={d.id} className="ph-docs__item">
             <span className="ph-badge ph-badge--pending">{DOC_KINDS[d.kind]}</span>
-            <a href={`/api/admin/documents/${d.id}`} className="ph-docs__name">
-              {d.filename}
+            <a href={d.url} target="_blank" rel="noopener noreferrer" className="ph-docs__name">
+              {d.title}
             </a>
-            <span className="ph-small">{fmtSize(d.sizeBytes)}</span>
             <button
               type="button"
               className="ph-btn ph-btn--sm ph-btn--danger"
               onClick={() => {
-                if (window.confirm(`ลบเอกสาร "${d.filename}"?`)) run(`/admin/documents/${d.id}/delete`, {});
+                if (window.confirm(`ลบลิงก์เอกสาร "${d.title}"?`)) run(`/admin/documents/${d.id}/delete`, {});
               }}
             >
               ลบ
@@ -321,7 +315,7 @@ function DocsPanel({ v, run, upload }: { v: AdminVideo; run: Run; upload: Upload
           </li>
         ))}
       </ul>
-      <form className="ph-docs__form" onSubmit={send}>
+      <form className="ph-docs__form" onSubmit={add}>
         <select
           className="ph-input ph-select ph-select--sm"
           aria-label="ประเภทเอกสาร"
@@ -335,21 +329,25 @@ function DocsPanel({ v, run, upload }: { v: AdminVideo; run: Run; upload: Upload
           ))}
         </select>
         <input
-          key={inputKey}
-          type="file"
-          accept="application/pdf,.pdf"
-          aria-label="เลือกไฟล์ PDF"
-          className="ph-file"
-          onChange={(e) => {
-            setFile(e.target.files?.[0] ?? null);
-            setErr("");
-          }}
+          className="ph-input ph-docs__title"
+          aria-label="ชื่อเอกสาร"
+          placeholder="ชื่อเอกสาร เช่น ใบงาน บทที่ 1"
+          maxLength={DOC_TITLE_MAX}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          className="ph-input ph-docs__url"
+          aria-label="ลิงก์ OneDrive"
+          placeholder="ลิงก์ OneDrive เช่น https://1drv.ms/b/…"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
         />
         <button type="submit" className="ph-btn ph-btn--sm" disabled={busy}>
-          {busy ? "กำลังอัปโหลด…" : "อัปโหลด PDF"}
+          เพิ่มเอกสาร
         </button>
         {err ? <p className="ph-error">{err}</p> : null}
-        <p className="ph-small ph-m0">PDF ไม่เกิน 10MB</p>
+        <p className="ph-small ph-m0">ใน OneDrive กด "แชร์" แล้วตั้งเป็น "ทุกคนที่มีลิงก์ดูได้" ก่อนคัดลอกลิงก์มาวาง</p>
       </form>
     </div>
   );

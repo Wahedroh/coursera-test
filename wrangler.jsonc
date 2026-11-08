@@ -16,12 +16,6 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "FILES",
-      "bucket_name": "physicshead-learn-files"
-    }
-  ],
   // ค่าที่ไม่ใช่ความลับของ Facebook Login
   // ค่าลับตั้งด้วย `npx wrangler secret put <ชื่อ>`: FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, ADMIN_FACEBOOK_IDS
   "vars": {

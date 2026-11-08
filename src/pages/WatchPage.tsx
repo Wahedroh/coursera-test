@@ -4,7 +4,6 @@ import type { Me } from "../../shared/validate";
 import { ProtectedPlayer, type ProgressReport } from "../components/ProtectedPlayer";
 import { api, ApiError } from "../lib/api";
 import { navigate } from "../lib/router";
-import { fmtSize } from "../lib/upload";
 
 type Props = { me: Me; videoId: number; onAuthError: (status: number) => void };
 
@@ -65,15 +64,13 @@ export function WatchPage({ me, videoId, onAuthError }: Props) {
             {video.documents.length ? (
               <div className="ph-dl">
                 {video.documents.map((d) => (
-                  <a key={d.id} className="ph-dl__btn" href={`/api/documents/${d.id}`}>
+                  <a key={d.id} className="ph-dl__btn" href={d.url} target="_blank" rel="noopener noreferrer">
                     <span className="ph-dl__icon" aria-hidden="true">
-                      ⬇
+                      ↗
                     </span>
                     <span className="ph-dl__text">
-                      <span className="ph-bold">ดาวน์โหลด{DOC_KINDS[d.kind]}</span>
-                      <span className="ph-small">
-                        {d.filename} · {fmtSize(d.sizeBytes)}
-                      </span>
+                      <span className="ph-bold">เปิด{DOC_KINDS[d.kind]}</span>
+                      <span className="ph-small">{d.title}</span>
                     </span>
                   </a>
                 ))}
