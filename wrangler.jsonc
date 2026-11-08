@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "physicshead-video",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    // เว็บ React เป็น SPA: path ที่ไม่ใช่ไฟล์ให้ส่ง index.html, ส่วน /api/* ให้ Worker ตอบก่อน
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "physicshead-learn",
+      "database_id": "cc48b416-2f05-4252-b73e-fe64f8cd16d9",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // ค่าที่ไม่ใช่ความลับของ Facebook Login
+  // ค่าลับตั้งด้วย `npx wrangler secret put <ชื่อ>`: FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, ADMIN_FACEBOOK_IDS
+  "vars": {
+    "FACEBOOK_GRAPH_VERSION": "v23.0",
+    "FACEBOOK_DIALOG_URL": "https://www.facebook.com",
+    "FACEBOOK_GRAPH_URL": "https://graph.facebook.com"
+  },
+  "observability": { "enabled": true }
+}

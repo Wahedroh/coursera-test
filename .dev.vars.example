@@ -1,0 +1,5 @@
+# คัดลอกเป็น .dev.vars (ไม่ถูก commit) แล้วใส่ค่าจริงสำหรับรันในเครื่อง
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+# Facebook user ID ของครู คั่นด้วยจุลภาค (เข้าครั้งแรกระบบจะแสดง ID ให้)
+ADMIN_FACEBOOK_IDS=

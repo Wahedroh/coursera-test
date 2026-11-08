@@ -1,0 +1,1640 @@
+/* ---------- พื้นหลัง: คลื่นมุมบน + จุด halftone ---------- */
+.ph-wave {
+  position: absolute;
+  top: 0;
+  width: clamp(150px, 32vw, 340px);
+  height: auto;
+  pointer-events: none;
+  z-index: 0;
+}
+.ph-wave--left { left: 0; }
+.ph-wave--right { right: 0; }
+
+.ph-page {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(28px, 6vw, 64px) 16px 40px;
+}
+
+/* ---------- หัวข้อสติกเกอร์ ---------- */
+.ph-title {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  line-height: 1;
+  margin: 0 0 clamp(16px, 3vw, 28px);
+  font-weight: 900;
+}
+.ph-title > span {
+  display: block;
+}
+.ph-stk {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.ph-stk::before,
+.ph-stk::after {
+  content: attr(data-t);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  white-space: nowrap;
+}
+.ph-stk::before {
+  color: var(--navy-d);
+  -webkit-text-stroke: 0.22em var(--navy-d);
+  filter: drop-shadow(0 0.07em 0 rgba(6, 22, 48, 0.45));
+}
+.ph-stk::after {
+  color: #fff;
+  -webkit-text-stroke: 0.125em #fff;
+}
+.ph-stk--top {
+  font-size: clamp(40px, 10.5vw, 104px);
+  color: var(--navy);
+}
+.ph-stk--bottom {
+  font-size: clamp(50px, 13vw, 128px);
+  color: var(--yellow);
+  margin-top: 0.04em;
+}
+.ph-subtitle {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 2px 24px 6px;
+  border-radius: 40px;
+  background: var(--navy-d);
+  border: 3px solid #fff;
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(16px, 3.6vw, 26px);
+  box-shadow: 0 4px 0 rgba(6, 22, 48, 0.35);
+}
+
+/* ---------- การ์ดขาวนวล ---------- */
+.ph-card {
+  position: relative;
+  background: linear-gradient(180deg, #f7f7f5, #efefec);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: clamp(20px, 5vw, 44px) clamp(16px, 4vw, 40px);
+}
+
+/* ---------- แถบพู่กัน + วงกลมไอคอน + ป้ายกระดาษ ---------- */
+.ph-pill {
+  --h: clamp(56px, 13vw, 96px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--h);
+  /* วงกลมไอคอนสูงกว่าแถบ 22px จึงเผื่อขอบบน-ล่าง 11px ไม่ให้ทับกัน */
+  margin: 11px auto;
+  max-width: 560px;
+}
+.ph-pill + .ph-pill {
+  margin-top: calc(22px + clamp(10px, 3vw, 26px));
+}
+.ph-pill__bg {
+  position: absolute;
+  left: calc(var(--h) * 0.5);
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 14px 60px 60px 14px;
+  filter: url(#ph-rough);
+  background:
+    repeating-linear-gradient(176deg, rgba(255, 255, 255, 0) 0 9px, rgba(255, 255, 255, 0.06) 9px 11px),
+    linear-gradient(90deg, var(--navy) 0%, #17508f 55%, var(--blue) 100%);
+  box-shadow: 0 10px 18px rgba(8, 30, 62, 0.28);
+}
+.ph-pill__badge {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(var(--h) + 22px);
+  height: calc(var(--h) + 22px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #1b4f8c, var(--navy-d));
+  border: 6px solid #fff;
+  box-shadow: 0 0 0 3px var(--navy-d), 0 10px 18px rgba(8, 30, 62, 0.35);
+}
+.ph-pill__badge svg {
+  width: 64%;
+  height: 64%;
+}
+.ph-pill__label {
+  position: relative;
+  z-index: 1;
+  margin-left: clamp(10px, 2.5vw, 20px);
+  color: #fff;
+  font-weight: 800;
+  font-size: calc(var(--h) * 0.42);
+  white-space: nowrap;
+  text-shadow:
+    -2px -2px 0 var(--navy-d), 2px -2px 0 var(--navy-d),
+    -2px 2px 0 var(--navy-d), 2px 2px 0 var(--navy-d),
+    0 5px 0 rgba(4, 18, 40, 0.55);
+}
+.ph-pill__tag {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: clamp(14px, 3vw, 26px);
+  padding: 0 12px;
+  transform: rotate(-3deg);
+}
+.ph-pill__tag::before {
+  content: "";
+  position: absolute;
+  inset: -2px 0;
+  background: #fff;
+  border-radius: 10px;
+  filter: url(#ph-rough2);
+  box-shadow: 0 4px 0 rgba(4, 18, 40, 0.25);
+}
+.ph-pill__tag span {
+  position: relative;
+  color: var(--navy-d);
+  font-weight: 900;
+  font-size: calc(var(--h) * 0.4);
+  white-space: nowrap;
+}
+
+/* ---------- ดูเดิล / ชื่อเพจ ---------- */
+.ph-hand {
+  font-family: var(--font-hand);
+}
+.ph-brand {
+  margin-top: clamp(20px, 4vw, 32px);
+  text-align: center;
+  font-weight: 700;
+  font-size: clamp(14px, 3vw, 20px);
+  color: var(--navy);
+  opacity: 0.85;
+}
+.ph-brand b {
+  color: var(--orange);
+  font-weight: 800;
+}
+
+/* ---------- ฟอร์ม ---------- */
+.ph-form {
+  display: grid;
+  gap: 16px;
+}
+.ph-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ph-field {
+  min-width: 0;
+}
+.ph-field > label,
+.ph-fieldset > legend {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--navy-d);
+}
+.ph-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ph-input {
+  width: 100%;
+  font: inherit;
+  font-size: 18px;
+  padding: 10px 14px;
+  border: 2px solid #c9d3e0;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--navy-d);
+}
+.ph-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(29, 98, 166, 0.25);
+}
+.ph-input[aria-invalid="true"] {
+  border-color: #c62828;
+}
+.ph-error {
+  margin: 6px 0 0;
+  color: #c62828;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ph-alert {
+  margin: 0;
+  padding: 10px 14px;
+  border: 2px solid var(--yellow);
+  border-radius: 12px;
+  background: #fff4d6;
+  color: var(--navy-d);
+  font-weight: 600;
+}
+.ph-note {
+  margin: 0;
+  text-align: center;
+  color: var(--navy);
+}
+
+/* ปุ่ม */
+.ph-btn {
+  width: 100%;
+  font: inherit;
+  font-weight: 800;
+  font-size: 20px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 14px;
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 5px 0 var(--navy-d);
+  cursor: pointer;
+}
+.ph-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--navy-d);
+}
+.ph-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ph-btn:focus-visible,
+.ph-link:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.ph-btn--ghost {
+  background: transparent;
+  color: var(--navy);
+  border: 2px solid var(--navy);
+  box-shadow: none;
+}
+.ph-link {
+  padding: 4px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ph-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.ph-actions--center {
+  justify-content: center;
+}
+
+/* ช่องติ๊ก */
+.ph-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 400 !important;
+  font-size: 16px !important;
+  cursor: pointer;
+}
+.ph-check input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  accent-color: var(--navy);
+}
+
+/* ตัวเลือกคอร์ส (แถบพู่กันกดได้) */
+.ph-choice {
+  position: relative;
+  display: block;
+  /* วงกลมไอคอนสูงกว่าแถบ 22px: เผื่อขอบบน-ล่างไว้ในตัว label */
+  padding: 11px 0;
+  cursor: pointer;
+}
+.ph-choice + .ph-choice {
+  margin-top: 6px;
+}
+.ph-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ph-choice .ph-pill {
+  --h: clamp(48px, 11vw, 72px);
+  margin: 0;
+  max-width: none;
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  transition: opacity 0.15s, filter 0.15s;
+}
+.ph-choice input:checked + .ph-pill {
+  opacity: 1;
+  filter: none;
+}
+.ph-choice input:checked + .ph-pill .ph-pill__badge {
+  border-color: var(--yellow);
+}
+.ph-choice input:focus-visible + .ph-pill {
+  outline: 3px solid var(--yellow);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+.ph-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- หน้าสถานะ ---------- */
+.ph-status {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: center;
+}
+.ph-status--pending { background: #fff4d6; color: var(--navy-d); border: 2px solid var(--yellow); }
+.ph-status--approved { background: #e3f1e6; color: #1b5e20; border: 2px solid #66bb6a; }
+.ph-status--rejected,
+.ph-status--suspended { background: #fde7e4; color: #b3261e; border: 2px solid #ef9a9a; }
+.ph-profile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 17px;
+}
+.ph-profile dt {
+  font-weight: 700;
+  color: var(--navy);
+}
+.ph-profile dd {
+  margin: 0;
+  color: var(--navy-d);
+  overflow-wrap: break-word;
+}
+
+/* ชื่อเพจท้ายหน้า (อยู่บนพื้นไล่สี) */
+.ph-footer {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0 16px 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: clamp(14px, 3vw, 18px);
+  color: #fff;
+  opacity: 0.9;
+}
+.ph-footer b {
+  color: var(--yellow);
+}
+
+/* ---------- หลังบ้านครู ---------- */
+.ph-page--wide {
+  max-width: 1040px;
+}
+.ph-title--sm {
+  margin: 0;
+  text-align: left;
+}
+.ph-title--sm .ph-stk--top {
+  font-size: clamp(26px, 6vw, 40px);
+}
+.ph-title--sm .ph-stk--bottom {
+  font-size: clamp(32px, 7.5vw, 52px);
+}
+.ph-adminbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.ph-admin {
+  display: grid;
+  gap: 14px;
+}
+.ph-m0 {
+  margin: 0;
+}
+.ph-small {
+  font-size: 14px;
+}
+.ph-code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 15px;
+  user-select: all;
+}
+.ph-empty {
+  margin: 0;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--paper);
+  text-align: center;
+  color: var(--navy);
+}
+
+/* ปุ่มเพิ่มเติม */
+a.ph-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+.ph-btn--sm {
+  width: auto;
+  flex: none;
+  white-space: nowrap;
+  font-size: 16px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 var(--navy-d);
+}
+.ph-btn--sm.ph-btn--ghost {
+  box-shadow: none;
+}
+.ph-btn--fb {
+  background: #1877f2;
+  box-shadow: 0 5px 0 #0b4fa8;
+}
+.ph-btn--ok {
+  background: #2e7d32;
+  box-shadow: 0 3px 0 #1b5e20;
+}
+.ph-btn--danger {
+  background: #c62828;
+  box-shadow: 0 3px 0 #8e1b1b;
+}
+.ph-btn--light {
+  flex: none;
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 3px 0 rgba(4, 18, 40, 0.4);
+}
+
+/* แท็บสถานะ */
+.ph-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.ph-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(11, 42, 82, 0.55);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+.ph-tab.is-active {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: var(--navy-d);
+}
+.ph-tab:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.ph-count {
+  min-width: 26px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--navy-d);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ตัวกรอง */
+.ph-filters {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+@media (max-width: 520px) {
+  .ph-filters {
+    grid-template-columns: 1fr;
+  }
+  .ph-filters .ph-select {
+    width: 100%;
+  }
+}
+.ph-select {
+  width: auto;
+  padding-right: 10px;
+}
+.ph-select--sm {
+  padding: 4px 8px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+/* การ์ดนักเรียน */
+.ph-students {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-student {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f7f7f5, #efefec);
+  box-shadow: 0 8px 22px rgba(5, 20, 45, 0.3);
+  color: var(--navy-d);
+}
+.ph-student__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 19px;
+}
+.ph-student__head strong {
+  overflow-wrap: break-word;
+}
+.ph-student__info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 15px;
+}
+.ph-student__info dt {
+  font-weight: 700;
+  color: var(--navy);
+}
+.ph-student__info dd {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+.ph-student__info a {
+  color: var(--blue);
+  font-weight: 600;
+}
+.ph-student__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ph-badge {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.ph-badge--pending { background: #fff4d6; color: #7a5300; border: 1px solid var(--yellow); }
+.ph-badge--approved { background: #e3f1e6; color: #1b5e20; border: 1px solid #66bb6a; }
+.ph-badge--rejected,
+.ph-badge--suspended { background: #fde7e4; color: #b3261e; border: 1px solid #ef9a9a; }
+.ph-reset {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed #c9d3e0;
+  font-size: 15px;
+}
+.ph-reset label {
+  font-weight: 700;
+}
+.ph-reset__row {
+  display: flex;
+  gap: 8px;
+}
+.ph-reset__row .ph-input {
+  padding: 6px 10px;
+  font-size: 16px;
+}
+.ph-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  font-weight: 700;
+}
+.ph-pager .ph-btn--ghost {
+  border-color: #fff;
+  color: #fff;
+}
+
+/* ---------- ช่วยจัดวาง ---------- */
+.ph-stack {
+  display: grid;
+  gap: 16px;
+}
+.ph-grow {
+  flex: 1;
+  min-width: 0;
+}
+.ph-bold {
+  font-weight: 700;
+}
+.ph-center {
+  justify-self: center;
+}
+.ph-error--box {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fde7e4;
+}
+
+/* แถบความคืบหน้า */
+.ph-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: #dfe5ee;
+  overflow: hidden;
+}
+.ph-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--yellow), var(--orange));
+}
+
+/* ---------- หน้ารายการคลิป (นักเรียน) ---------- */
+.ph-resume {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 3px solid #fff;
+  border-radius: 18px;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--blue) 100%);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+}
+.ph-resume__label {
+  color: var(--yellow);
+  font-weight: 800;
+  font-size: 18px;
+}
+.ph-resume__title {
+  font-weight: 700;
+  font-size: 19px;
+}
+.ph-resume .ph-bar {
+  background: rgba(255, 255, 255, 0.25);
+}
+.ph-chapter-title {
+  margin: 0 0 10px;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--navy-d);
+}
+.ph-chapter-no {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--yellow);
+  color: var(--navy-d);
+  font-size: 15px;
+  vertical-align: 2px;
+}
+.ph-videos {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-video {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #dfe5ee;
+  border-radius: 14px;
+  background: #fff;
+  font: inherit;
+  color: var(--navy-d);
+  text-align: left;
+  cursor: pointer;
+}
+.ph-video:hover,
+.ph-video:focus-visible {
+  border-color: var(--blue);
+  outline: none;
+}
+.ph-video__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 15px;
+}
+.ph-video__icon.is-done {
+  background: #2e7d32;
+}
+.ph-video__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.ph-video__title {
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+.ph-video__meta {
+  font-size: 14px;
+  color: #50607a;
+}
+
+/* ---------- หน้าดูคลิป ---------- */
+.ph-watch {
+  display: grid;
+  gap: 14px;
+}
+.ph-watch__top {
+  display: flex;
+}
+.ph-watch__info {
+  display: grid;
+  gap: 10px;
+}
+.ph-watch__chapter {
+  margin: 0;
+  font-weight: 700;
+  color: var(--blue);
+}
+.ph-watch__title {
+  margin: 0;
+  font-size: clamp(20px, 4.5vw, 28px);
+  font-weight: 800;
+  color: var(--navy-d);
+}
+
+/* ---------- ตัวเล่นแบบป้องกัน ---------- */
+.ph-player {
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: var(--card-shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.ph-player__stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.ph-player__frame,
+.ph-player__frame > *,
+.ph-player__frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* ชั้นบังทับทั้งกรอบ: คลิกในกรอบ = เล่น/หยุด ไม่ถึง iframe ของ YouTube */
+.ph-player__shield {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.ph-player__bigplay {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  padding-left: 6px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: rgba(18, 59, 110, 0.85);
+  color: #fff;
+  font-size: 30px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.ph-player__bigplay.is-small {
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+}
+.ph-player__wm {
+  position: absolute;
+  z-index: 3;
+  max-width: 60%;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  font-size: clamp(12px, 2.4vw, 18px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  transition: top 0.8s, left 0.8s;
+}
+.ph-player__error {
+  position: absolute;
+  inset: auto 0 40%;
+  z-index: 4;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  font-weight: 700;
+}
+.ph-player__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--navy-d);
+  color: #fff;
+}
+.ph-pbtn {
+  flex: none;
+  min-width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+}
+.ph-pbtn:disabled {
+  opacity: 0.5;
+}
+.ph-pbtn:focus-visible,
+.ph-player__speed:focus-visible,
+.ph-player__seek:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
+}
+.ph-player__time {
+  flex: none;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.ph-player__seek {
+  flex: 1;
+  min-width: 60px;
+  accent-color: var(--yellow);
+}
+.ph-player__speed {
+  flex: none;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+}
+.ph-player__speed option {
+  color: #000;
+}
+@media (max-width: 480px) {
+  .ph-player__bar {
+    flex-wrap: wrap;
+  }
+  .ph-player__seek {
+    order: -1;
+    flex-basis: 100%;
+  }
+}
+/* เต็มจอ (ทั้ง Fullscreen API และแบบ CSS สำหรับ iPhone) */
+.ph-player:fullscreen,
+.ph-player.is-fs {
+  border-radius: 0;
+}
+.ph-player.is-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.ph-player:fullscreen .ph-player__stage,
+.ph-player.is-fs .ph-player__stage {
+  flex: 1;
+  aspect-ratio: auto;
+}
+
+/* ---------- หลังบ้าน: บทและคลิป ---------- */
+.ph-adminnav {
+  display: flex;
+  gap: 8px;
+  margin: -8px 0 16px;
+}
+.ph-adminnav__link {
+  padding: 6px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.ph-adminnav__link.is-active {
+  background: #fff;
+  color: var(--navy-d);
+}
+.ph-adminnav__link:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.ph-sortable {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-sortable > li.is-dragging {
+  opacity: 0.85;
+  transform: scale(1.01);
+}
+.ph-sortable > li.is-dragging > * {
+  box-shadow: 0 0 0 3px var(--yellow), var(--card-shadow);
+}
+.ph-handle {
+  flex: none;
+  width: 34px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #e6ebf2;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -3px;
+  cursor: grab;
+  touch-action: none;
+}
+.ph-handle:active {
+  cursor: grabbing;
+}
+.ph-handle:focus-visible {
+  outline: 3px solid var(--yellow);
+}
+.ph-chapter {
+  display: grid;
+  gap: 12px;
+}
+.ph-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ph-row-head .ph-chapter-title {
+  margin: 0;
+}
+.ph-vlist {
+  gap: 8px;
+}
+.ph-vrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 2px solid #dfe5ee;
+  border-radius: 12px;
+  background: #fff;
+}
+.ph-thumb {
+  flex: none;
+  width: 96px;
+  height: 54px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #dfe5ee;
+}
+.ph-vrow__body {
+  flex: 1;
+  min-width: 140px;
+  display: grid;
+  gap: 2px;
+  overflow-wrap: break-word;
+}
+.ph-vrow__actions {
+  display: flex;
+  gap: 6px;
+}
+.ph-vrow__edit {
+  flex: 1 1 100%;
+  display: grid;
+  gap: 6px;
+}
+.ph-inline-form {
+  display: grid;
+  gap: 8px;
+}
+.ph-inline-form > label {
+  font-weight: 700;
+  color: var(--navy-d);
+}
+.ph-addvideo {
+  padding-top: 10px;
+  border-top: 1px dashed #c9d3e0;
+}
+.ph-addvideo .ph-btn {
+  justify-self: start;
+}
+
+/* ---------- เอกสาร PDF ---------- */
+.ph-docs {
+  flex: 1 1 100%;
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #c9d3e0;
+}
+.ph-docs__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-docs__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ph-docs__name {
+  flex: 1;
+  min-width: 120px;
+  color: var(--blue);
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.ph-docs__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ph-docs__form .ph-error,
+.ph-docs__form .ph-small {
+  flex-basis: 100%;
+}
+.ph-file {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  font-size: 15px;
+}
+.ph-dl {
+  display: grid;
+  gap: 8px;
+}
+.ph-dl__btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 2px solid var(--yellow);
+  border-radius: 14px;
+  background: #fff8e5;
+  color: var(--navy-d);
+  text-decoration: none;
+}
+.ph-dl__btn:hover,
+.ph-dl__btn:focus-visible {
+  background: #fff1c7;
+  outline: none;
+}
+.ph-dl__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--yellow);
+  font-weight: 900;
+}
+.ph-dl__text {
+  display: grid;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* ---------- ประกาศ ---------- */
+.ph-announce {
+  display: grid;
+  gap: 10px;
+}
+.ph-announce__h {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy-d);
+}
+.ph-announce__list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ph-announce__item {
+  padding: 12px 14px;
+  border-left: 5px solid var(--orange);
+  border-radius: 10px;
+  background: #fff;
+}
+.ph-announce__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy-d);
+}
+.ph-announce__time {
+  margin: 2px 0 6px;
+  font-size: 13px;
+  color: #50607a;
+}
+.ph-announce__body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  color: var(--navy-d);
+}
+.ph-textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+.ph-radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 6px;
+}
+.ph-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.ph-radio input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--navy);
+}
+
+/* ---------- ประวัติการเรียน (หลังบ้าน) ---------- */
+.ph-prog-head {
+  display: grid;
+  gap: 10px;
+  color: var(--navy-d);
+}
+.ph-prog-head .ph-student__head {
+  font-size: 22px;
+}
+.ph-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 4px 0 0;
+}
+.ph-stats > div {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid #dfe5ee;
+}
+.ph-stats dt {
+  font-size: 14px;
+  font-weight: 700;
+  color: #50607a;
+}
+.ph-stats dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy-d);
+}
+.ph-prog-chapter {
+  display: grid;
+  gap: 8px;
+}
+.ph-prog-chapter .ph-chapter-title {
+  margin: 0;
+}
+.ph-prog-table {
+  width: 100%;
+  table-layout: fixed; /* ทุกบทใช้ความกว้างคอลัมน์เท่ากัน */
+  border-collapse: collapse;
+  font-size: 15px;
+  color: var(--navy-d);
+}
+.ph-prog-table th,
+.ph-prog-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #dfe5ee;
+  vertical-align: middle;
+}
+.ph-prog-table thead th {
+  font-size: 14px;
+  color: #50607a;
+}
+.ph-prog-table thead th:nth-child(1) { width: 30%; }
+.ph-prog-table thead th:nth-child(2) { width: 18%; }
+.ph-prog-table thead th:nth-child(3) { width: 17%; }
+.ph-prog-table thead th:nth-child(4) { width: 20%; }
+.ph-prog-table thead th:nth-child(5) { width: 15%; }
+.ph-prog-table tbody th {
+  overflow-wrap: break-word;
+}
+.ph-prog-table tbody th {
+  font-weight: 700;
+}
+.ph-prog-table td {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ph-prog-table tr.is-unwatched td,
+.ph-prog-table tr.is-unwatched th {
+  color: #8592a6;
+}
+.ph-prog-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ph-prog-pct .ph-bar {
+  width: 80px;
+}
+/* จอแคบ: แต่ละคลิปเป็นการ์ดเล็ก */
+@media (max-width: 640px) {
+  .ph-prog-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .ph-prog-table,
+  .ph-prog-table tbody,
+  .ph-prog-table tr,
+  .ph-prog-table th,
+  .ph-prog-table td {
+    display: block;
+  }
+  .ph-prog-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid #dfe5ee;
+  }
+  .ph-prog-table th,
+  .ph-prog-table td {
+    padding: 2px 0;
+    border: 0;
+  }
+  .ph-prog-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    white-space: normal;
+  }
+  .ph-prog-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #50607a;
+  }
+}
+
+/* เส้นคั่น "หรือ ..." ระหว่างปุ่ม Facebook กับฟอร์ม */
+.ph-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #50607a;
+  font-size: 15px;
+}
+.ph-divider::before,
+.ph-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #c9d3e0;
+}
+
+/* ---------- หน้าข้อมูล (หลังบ้าน) ---------- */
+.ph-meter {
+  display: grid;
+  gap: 6px;
+  color: var(--navy-d);
+}
+.ph-meter__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 15px;
+}
+.ph-meter__bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #dfe5ee;
+  overflow: hidden;
+}
+.ph-meter__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--navy));
+}
+.ph-meter.is-warn .ph-meter__bar > span {
+  background: linear-gradient(90deg, var(--orange), #c62828);
+}
+.ph-close-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.ph-close-grid .ph-field {
+  display: grid;
+  gap: 6px;
+}
+.ph-adminnav {
+  flex-wrap: wrap;
+}
+
+/* ---------- นโยบาย / ข้อตกลง ---------- */
+.ph-legal {
+  color: var(--navy-d);
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+.ph-legal h1 {
+  margin: 0 0 12px;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 800;
+}
+.ph-legal h2 {
+  margin: 22px 0 6px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--navy);
+}
+.ph-legal p,
+.ph-legal ul,
+.ph-legal ol {
+  margin: 0 0 8px;
+}
+.ph-legal ul,
+.ph-legal ol {
+  padding-left: 22px;
+}
+.ph-legal a,
+.ph-check a {
+  color: var(--blue);
+  font-weight: 700;
+}
+.ph-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ph-footer__links a {
+  color: #fff;
+}
+.ph-footer__links a:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+.ph-docs__title,
+.ph-docs__url {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 16px;
+}
+
+/* ---------- มือถือ: ย่อขนาดโดยรวมให้กระชับขึ้น ---------- */
+@media (max-width: 480px) {
+  .ph-page {
+    padding: 18px 12px 28px;
+  }
+  /* หัวข้อสติกเกอร์ */
+  .ph-title {
+    margin-bottom: 14px;
+  }
+  .ph-stk--top {
+    font-size: 7.4vw;
+  }
+  .ph-stk--bottom {
+    font-size: 9.4vw;
+  }
+  .ph-subtitle {
+    margin-top: 8px;
+    padding: 1px 16px 4px;
+    font-size: 14px;
+    border-width: 2px;
+  }
+  .ph-title--sm .ph-stk--top {
+    font-size: 22px;
+  }
+  .ph-title--sm .ph-stk--bottom {
+    font-size: 28px;
+  }
+  /* การ์ดและฟอร์ม */
+  .ph-card {
+    padding: 16px 14px;
+    border-radius: 20px;
+  }
+  .ph-form {
+    gap: 12px;
+  }
+  .ph-field > label,
+  .ph-fieldset > legend {
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .ph-input {
+    font-size: 16px; /* ไม่ต่ำกว่า 16px: iPhone จะไม่ซูมเองตอนแตะช่อง */
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+  .ph-btn {
+    font-size: 17px;
+    padding: 10px 16px;
+    border-radius: 12px;
+  }
+  .ph-btn--sm {
+    font-size: 15px;
+    padding: 6px 12px;
+  }
+  .ph-check {
+    font-size: 14px !important;
+  }
+  .ph-error,
+  .ph-note,
+  .ph-alert {
+    font-size: 14px;
+  }
+  /* แถบเลือกคอร์ส */
+  .ph-pill,
+  .ph-choice .ph-pill {
+    --h: 44px;
+  }
+  .ph-pill__badge {
+    border-width: 4px;
+  }
+  /* หน้าแรก / รายการคลิป */
+  .ph-stack {
+    gap: 12px;
+  }
+  .ph-resume {
+    padding: 10px 14px;
+    border-radius: 14px;
+  }
+  .ph-resume__label {
+    font-size: 15px;
+  }
+  .ph-resume__title {
+    font-size: 16px;
+  }
+  .ph-chapter-title {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .ph-chapter-no {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+  .ph-video {
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+  .ph-video__icon {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  .ph-video__title {
+    font-size: 15px;
+  }
+  .ph-video__meta {
+    font-size: 12.5px;
+  }
+  .ph-announce__h {
+    font-size: 17px;
+  }
+  .ph-announce__item {
+    padding: 10px 12px;
+  }
+  .ph-announce__title {
+    font-size: 15.5px;
+  }
+  .ph-announce__body {
+    font-size: 14.5px;
+  }
+  .ph-status {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+  .ph-profile {
+    font-size: 15px;
+  }
+  /* หน้าดูคลิป */
+  .ph-watch {
+    gap: 10px;
+  }
+  .ph-player {
+    border-radius: 14px;
+  }
+  .ph-pbtn,
+  .ph-player__speed {
+    min-width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  .ph-player__time {
+    font-size: 13px;
+  }
+  .ph-player__bigplay {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  .ph-watch__title {
+    font-size: 19px;
+  }
+  .ph-watch__chapter {
+    font-size: 14px;
+  }
+  .ph-dl__btn {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+  .ph-dl__icon {
+    width: 32px;
+    height: 32px;
+  }
+  .ph-footer {
+    font-size: 13px;
+    padding-bottom: 20px;
+  }
+  .ph-footer__links {
+    font-size: 12.5px;
+  }
+}
