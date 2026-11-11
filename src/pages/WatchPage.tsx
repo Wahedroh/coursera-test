@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DOC_KINDS, type WatchVideo } from "../../shared/content";
 import type { Me } from "../../shared/validate";
-import { ProtectedPlayer, type ProgressReport } from "../components/ProtectedPlayer";
+import { ProtectedPlayer, type PlayerControl, type ProgressReport } from "../components/ProtectedPlayer";
+import { QuestionPanel } from "../components/QuestionPanel";
 import { api, ApiError } from "../lib/api";
 import { navigate } from "../lib/router";
 
@@ -10,6 +11,7 @@ type Props = { me: Me; videoId: number; onAuthError: (status: number) => void };
 export function WatchPage({ me, videoId, onAuthError }: Props) {
   const [video, setVideo] = useState<WatchVideo | null>(null);
   const [error, setError] = useState("");
+  const player = useRef<PlayerControl | null>(null);
 
   useEffect(() => {
     setVideo(null);
@@ -56,6 +58,7 @@ export function WatchPage({ me, videoId, onAuthError }: Props) {
             startAt={startAt}
             watermark={`${me.firstName} ${me.lastName} ${me.studentPhone}`}
             onProgress={save}
+            controlRef={player}
           />
           <section className="ph-card ph-watch__info">
             <p className="ph-watch__chapter">{video.chapterTitle}</p>
@@ -95,6 +98,7 @@ export function WatchPage({ me, videoId, onAuthError }: Props) {
               </button>
             </div>
           </section>
+          <QuestionPanel key={`q${video.id}`} videoId={video.id} player={player} onAuthError={onAuthError} />
         </>
       ) : null}
     </div>

@@ -28,7 +28,13 @@ export function LoginPage({ notice, onLogin }: Props) {
     try {
       onLogin(await api<Me>("/auth/login", { phone, password }));
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 401 ? "เบอร์หรือรหัสผ่านไม่ถูกต้อง" : "ระบบขัดข้อง กรุณาลองใหม่");
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? "เบอร์หรือรหัสผ่านไม่ถูกต้อง"
+          : err instanceof ApiError && err.status === 429 && err.body?.message
+            ? err.body.message
+            : "ระบบขัดข้อง กรุณาลองใหม่",
+      );
     } finally {
       setBusy(false);
     }

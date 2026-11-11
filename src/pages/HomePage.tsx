@@ -4,6 +4,7 @@ import { AnnouncementList } from "../components/AnnouncementList";
 import { Card } from "../components/Card";
 import { StickerTitle } from "../components/StickerTitle";
 import { api } from "../lib/api";
+import { navigate } from "../lib/router";
 
 const STATUS = {
   pending: { subtitle: "รอครูยืนยัน", text: "สมัครเรียบร้อยแล้ว รอครูยืนยัน เมื่อครูยืนยันแล้วจะเห็นคลิปของคอร์ส" },
@@ -48,6 +49,9 @@ export function HomePage({ me, onLogout }: Props) {
               <dt>เบอร์นักเรียน</dt>
               <dd>{me.studentPhone}</dd>
             </dl>
+            <button className="ph-btn ph-btn--ghost" type="button" onClick={() => navigate("/account")}>
+              เปลี่ยนรหัสผ่าน
+            </button>
             <button className="ph-btn ph-btn--ghost" type="button" onClick={logout} disabled={busy}>
               ออกจากระบบ
             </button>

@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { normalizePhone, validateRegister, type Me, type RegisterInput } from "../../shared/validate";
+import { normalizePhone, PASSWORD_MAX, PASSWORD_MIN, validateRegister, type Me, type RegisterInput } from "../../shared/validate";
 import { academicYear } from "../lib/academicYear";
 import { DUMMY_HASH, hashPassword, verifyPassword } from "../lib/password";
 import { currentStudentId, endSession, startSession } from "../lib/session";
+import { clearFailures, clientIp, isLocked, LOCKED_MESSAGE, recordFailure } from "../lib/throttle";
 
 export type StudentRow = {
   id: number;
@@ -94,6 +95,10 @@ auth.post("/auth/login", async (c) => {
   const phone = normalizePhone(typeof body.phone === "string" ? body.phone.trim() : "");
   const password = typeof body.password === "string" ? body.password : "";
 
+  // นับรหัสผิดต่อ เบอร์ + IP: เดารหัสของเบอร์หนึ่งได้จำกัด และนักเรียนที่ใช้ Wi-Fi เดียวกันไม่โดนล็อกด้วยกัน
+  const key = `s:${clientIp(c.req.raw)}:${phone}`;
+  if (await isLocked(c.env.DB, key)) return c.json({ error: "too_many", message: LOCKED_MESSAGE }, 429);
+
   const row = phone
     ? await c.env.DB.prepare(`SELECT ${ME_COLUMNS}, password_hash FROM students WHERE student_phone = ?1`)
         .bind(phone)
@@ -102,9 +107,11 @@ auth.post("/auth/login", async (c) => {
 
   const ok = await verifyPassword(password, row?.password_hash ?? DUMMY_HASH);
   if (!row || !row.password_hash || !ok) {
+    await recordFailure(c.env.DB, key);
     return c.json({ error: "invalid_credentials", message: "เบอร์หรือรหัสผ่านไม่ถูกต้อง" }, 401);
   }
 
+  await clearFailures(c.env.DB, key);
   await startSession(c, row.id);
   return c.json(toMe(row));
 });
@@ -120,4 +127,35 @@ auth.get("/me", async (c) => {
   const row = await c.env.DB.prepare(`SELECT ${ME_COLUMNS} FROM students WHERE id = ?1`).bind(id).first<StudentRow>();
   if (!row) return c.json({ error: "unauthorized" }, 401);
   return c.json(toMe(row));
+});
+
+// นักเรียนเปลี่ยนรหัสผ่านเอง: มีรหัสเดิมต้องใส่รหัสเดิม (สมัครด้วย Facebook ยังไม่มีรหัส → ตั้งใหม่ได้เลย)
+auth.get("/auth/password", async (c) => {
+  const id = await currentStudentId(c);
+  if (id === null) return c.json({ error: "unauthorized" }, 401);
+  const r = await c.env.DB.prepare("SELECT password_hash IS NOT NULL AS has FROM students WHERE id = ?1").bind(id).first<{ has: number }>();
+  return c.json({ hasPassword: r?.has === 1 });
+});
+
+auth.post("/auth/password", async (c) => {
+  const id = await currentStudentId(c);
+  if (id === null) return c.json({ error: "unauthorized" }, 401);
+  const body = await readJson(c.req.raw);
+  const current = typeof body.current === "string" ? body.current : "";
+  const next = typeof body.next === "string" ? body.next : "";
+  if (next.length < PASSWORD_MIN || next.length > PASSWORD_MAX) {
+    return c.json({ error: "validation", fields: { next: `รหัสผ่านใหม่ต้องมีอย่างน้อย ${PASSWORD_MIN} ตัว` } }, 400);
+  }
+  const db = c.env.DB;
+  const key = `p:${id}`;
+  if (await isLocked(db, key)) return c.json({ error: "too_many", message: LOCKED_MESSAGE }, 429);
+  const row = await db.prepare("SELECT password_hash FROM students WHERE id = ?1").bind(id).first<{ password_hash: string | null }>();
+  if (!row) return c.json({ error: "unauthorized" }, 401);
+  if (row.password_hash && !(await verifyPassword(current, row.password_hash))) {
+    await recordFailure(db, key);
+    return c.json({ error: "validation", fields: { current: "รหัสผ่านเดิมไม่ถูกต้อง" } }, 400);
+  }
+  await clearFailures(db, key);
+  await db.prepare("UPDATE students SET password_hash = ?1, updated_at = unixepoch() WHERE id = ?2").bind(await hashPassword(next), id).run();
+  return c.json({ ok: true });
 });

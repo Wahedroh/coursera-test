@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Me } from "../shared/validate";
 import { api, ApiError } from "./lib/api";
 import { navigate, usePath } from "./lib/router";
+import { AccountPage } from "./pages/AccountPage";
 import { CoursePage } from "./pages/CoursePage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
@@ -48,7 +49,7 @@ export function App() {
     if (auth.state === "guest" && !GUEST_PATHS.includes(path)) navigate("/login", true);
     if (auth.state === "student") {
       const canWatch = auth.me.status === "approved" && WATCH_PATH.test(path);
-      if (path !== "/" && !canWatch) navigate("/", true);
+      if (path !== "/" && path !== "/account" && !canWatch) navigate("/", true);
     }
   }, [auth, path]);
 
@@ -66,7 +67,9 @@ export function App() {
   if (auth.state === "student") {
     const watch = path.match(WATCH_PATH);
     const logout = () => setAuth({ state: "guest" });
-    if (auth.me.status === "approved" && watch) {
+    if (path === "/account") {
+      page = <AccountPage onAuthError={authError} />;
+    } else if (auth.me.status === "approved" && watch) {
       page = <WatchPage me={auth.me} videoId={Number(watch[1])} onAuthError={authError} />;
     } else if (auth.me.status === "approved") {
       page = <CoursePage me={auth.me} onLogout={logout} onAuthError={authError} />;

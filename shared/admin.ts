@@ -64,3 +64,17 @@ export type StudentProgress = {
     lastWatchedAt: number | null;
   };
 };
+
+// ---------- ภาพรวมทั้งห้อง ----------
+
+export type OverviewVideo = { id: number; title: string; chapterTitle: string };
+export type OverviewStudent = {
+  id: number;
+  name: string;
+  school: string;
+  /** unix seconds; null = ยังไม่เคยดูคลิปเลย */
+  lastWatchedAt: number | null;
+  /** videoId → % ที่ดู (ไม่มี key = ยังไม่เปิด) */
+  percents: Record<number, number>;
+};
+export type ClassOverview = { videos: OverviewVideo[]; students: OverviewStudent[] };

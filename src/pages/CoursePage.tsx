@@ -72,7 +72,10 @@ export function CoursePage({ me, onLogout, onAuthError }: Props) {
                       {v.percent >= 100 ? "✓" : "▶"}
                     </span>
                     <span className="ph-video__body">
-                      <span className="ph-video__title">{v.title}</span>
+                      <span className="ph-video__title">
+                        {v.isNew ? <span className="ph-new">ใหม่</span> : null}
+                        {v.title}
+                      </span>
                       <span className="ph-video__meta">
                         {fmtMin(v.durationSec)}
                         {v.percent > 0 ? ` · ดูแล้ว ${v.percent}%` : ""}
@@ -88,9 +91,14 @@ export function CoursePage({ me, onLogout, onAuthError }: Props) {
           </Card>
         ))}
 
-        <button type="button" className="ph-btn ph-btn--sm ph-btn--light ph-center" onClick={logout}>
-          ออกจากระบบ ({me.firstName})
-        </button>
+        <div className="ph-actions ph-actions--center">
+          <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate("/account")}>
+            เปลี่ยนรหัสผ่าน
+          </button>
+          <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={logout}>
+            ออกจากระบบ ({me.firstName})
+          </button>
+        </div>
       </div>
     </>
   );

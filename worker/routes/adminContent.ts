@@ -151,8 +151,8 @@ adminContent.post("/admin/videos", async (c) => {
   const course = await chapterCourse(c.env.DB, chapterId);
   if (!course) return c.json({ error: "not_found" }, 404);
   await c.env.DB.prepare(
-    `INSERT INTO videos (chapter_id, title, youtube_id, sort_order)
-     VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM videos WHERE chapter_id = ?1))`,
+    `INSERT INTO videos (chapter_id, title, youtube_id, created_at, sort_order)
+     VALUES (?1, ?2, ?3, unixepoch(), (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM videos WHERE chapter_id = ?1))`,
   )
     .bind(chapterId, title, youtubeId)
     .run();

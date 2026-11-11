@@ -6,6 +6,7 @@ import {
   STATUSES,
   type AdminStudent,
   type AdminStudentList,
+  type ClassOverview,
   type ProgressChapter,
   type StudentProgress,
 } from "../../shared/admin";
@@ -22,6 +23,7 @@ import {
 } from "../lib/adminSession";
 import { facebookAuthUrl, facebookConfigured, facebookUserFromCode } from "../lib/facebook";
 import { hashPassword } from "../lib/password";
+import { clearFailures, clientIp, isLocked, LOCKED_MESSAGE, recordFailure } from "../lib/throttle";
 import { randomToken } from "../lib/session";
 
 const STATE_COOKIE = "fb_admin_state";
@@ -74,37 +76,20 @@ admin.get("/admin/auth/callback", async (c) => {
 
 // ---------- เข้าสู่ระบบด้วยรหัสผ่าน ----------
 
-const MAX_FAILURES = 10; // ใส่ผิดได้ 10 ครั้ง ต่อ IP ต่อ 15 นาที
-const WINDOW_SEC = 15 * 60;
-
 admin.post("/admin/auth/password", async (c) => {
   if (!c.env.ADMIN_PASSWORD) {
     return c.json({ error: "config", message: "ยังไม่ได้ตั้งรหัสผ่านครู (ADMIN_PASSWORD)" }, 503);
   }
-  const ip = c.req.header("cf-connecting-ip") ?? "local";
   const db = c.env.DB;
-  const att = await db
-    .prepare("SELECT failures FROM admin_login_attempts WHERE ip = ?1 AND window_start > unixepoch() - ?2")
-    .bind(ip, WINDOW_SEC)
-    .first<{ failures: number }>();
-  if (att && att.failures >= MAX_FAILURES) {
-    return c.json({ error: "too_many", message: "ใส่รหัสผิดหลายครั้งเกินไป กรุณารอ 15 นาที" }, 429);
-  }
+  const key = `a:${clientIp(c.req.raw)}`; // ใส่ผิดได้ 10 ครั้ง ต่อ IP ต่อ 15 นาที
+  if (await isLocked(db, key)) return c.json({ error: "too_many", message: LOCKED_MESSAGE }, 429);
   const body = ((await c.req.json().catch(() => null)) ?? {}) as Record<string, unknown>;
   const password = typeof body.password === "string" ? body.password : "";
   if (!(await checkAdminPassword(c.env, password))) {
-    await db
-      .prepare(
-        `INSERT INTO admin_login_attempts (ip, failures, window_start) VALUES (?1, 1, unixepoch())
-         ON CONFLICT (ip) DO UPDATE SET
-           failures = CASE WHEN window_start > unixepoch() - ?2 THEN failures + 1 ELSE 1 END,
-           window_start = CASE WHEN window_start > unixepoch() - ?2 THEN window_start ELSE unixepoch() END`,
-      )
-      .bind(ip, WINDOW_SEC)
-      .run();
+    await recordFailure(db, key);
     return c.json({ error: "invalid", message: "รหัสผ่านไม่ถูกต้อง" }, 401);
   }
-  await db.prepare("DELETE FROM admin_login_attempts WHERE ip = ?1").bind(ip).run();
+  await clearFailures(db, key);
   await startAdminSession(c, (await passwordIdentity(c.env))!);
   return c.json({ ok: true });
 });
@@ -119,6 +104,7 @@ admin.post("/admin/logout", async (c) => {
 admin.use("/admin/me", requireAdmin);
 admin.use("/admin/students", requireAdmin);
 admin.use("/admin/students/*", requireAdmin);
+admin.use("/admin/overview", requireAdmin);
 
 admin.get("/admin/me", (c) => c.json({ facebookUserId: c.get("adminId") }));
 
@@ -316,5 +302,55 @@ admin.get("/admin/students/:id/progress", async (c) => {
     }
   }
   const body: StudentProgress = { student: toStudent(row), chapters, summary };
+  return c.json(body);
+});
+
+// ภาพรวมทั้งห้อง: นักเรียนที่ยืนยันแล้ว × ทุกคลิปของคอร์ส
+admin.get("/admin/overview", async (c) => {
+  const course = c.req.query("course") ?? "";
+  if (!isCourse(course)) return c.json({ error: "validation" }, 400);
+  const db = c.env.DB;
+  const [vi, st, pr] = await db.batch([
+    db
+      .prepare(
+        `SELECT v.id, v.title, c.title AS chapter_title FROM videos v JOIN chapters c ON c.id = v.chapter_id
+         WHERE c.course = ?1 ORDER BY c.sort_order, c.id, v.sort_order, v.id`,
+      )
+      .bind(course),
+    db
+      .prepare(
+        `SELECT s.id, s.first_name || ' ' || s.last_name AS name, s.school,
+                (SELECT MAX(last_watched_at) FROM progress p WHERE p.student_id = s.id) AS last_watched_at
+         FROM students s WHERE s.course = ?1 AND s.status = 'approved' ORDER BY s.first_name, s.last_name`,
+      )
+      .bind(course),
+    db
+      .prepare(
+        `SELECT p.student_id, p.video_id, p.max_position_sec, v.duration_sec
+         FROM progress p JOIN students s ON s.id = p.student_id JOIN videos v ON v.id = p.video_id
+         WHERE s.course = ?1 AND s.status = 'approved'`,
+      )
+      .bind(course),
+  ]);
+  const students = (st.results as { id: number; name: string; school: string; last_watched_at: number | null }[]).map((s) => ({
+    id: s.id,
+    name: s.name,
+    school: s.school,
+    lastWatchedAt: s.last_watched_at,
+    percents: {} as Record<number, number>,
+  }));
+  const byId = new Map(students.map((s) => [s.id, s]));
+  for (const p of pr.results as { student_id: number; video_id: number; max_position_sec: number; duration_sec: number | null }[]) {
+    const s = byId.get(p.student_id);
+    if (s) s.percents[p.video_id] = percentOf(p.max_position_sec, p.duration_sec);
+  }
+  const body: ClassOverview = {
+    videos: (vi.results as { id: number; title: string; chapter_title: string }[]).map((v) => ({
+      id: v.id,
+      title: v.title,
+      chapterTitle: v.chapter_title,
+    })),
+    students,
+  };
   return c.json(body);
 });

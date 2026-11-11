@@ -5,12 +5,22 @@ import { api } from "../lib/api";
 export const fmtDateTime = (sec: number) =>
   new Date(sec * 1000).toLocaleString("th-TH", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 
+// API บันทึกว่า "เห็นแล้ว" ทุกครั้งที่โหลด ถ้าโหลดซ้ำทันที (เช่น React StrictMode) ป้าย "ใหม่" จะหาย
+// จึงใช้ผลเดิมถ้าเพิ่งโหลดไปไม่เกิน 5 วินาที
+let recent: { at: number; req: Promise<{ announcements: Announcement[] }> } | null = null;
+function loadOnce() {
+  if (!recent || Date.now() - recent.at > 5000) {
+    recent = { at: Date.now(), req: api<{ announcements: Announcement[] }>("/announcements") };
+  }
+  return recent.req;
+}
+
 /** ประกาศจากครูที่นักเรียนคนนี้ควรเห็น (ทุกคน + คอร์สตัวเอง) */
 export function AnnouncementList() {
   const [items, setItems] = useState<Announcement[] | null>(null);
 
   useEffect(() => {
-    api<{ announcements: Announcement[] }>("/announcements")
+    loadOnce()
       .then((r) => setItems(r.announcements))
       .catch(() => setItems([]));
   }, []);
@@ -25,7 +35,10 @@ export function AnnouncementList() {
       <ul className="ph-announce__list">
         {items.map((a) => (
           <li key={a.id} className="ph-announce__item">
-            <h3 className="ph-announce__title">{a.title}</h3>
+            <h3 className="ph-announce__title">
+              {a.isNew ? <span className="ph-new">ใหม่</span> : null}
+              {a.title}
+            </h3>
             <p className="ph-announce__time">{fmtDateTime(a.createdAt)}</p>
             <p className="ph-announce__body">{a.body}</p>
           </li>
