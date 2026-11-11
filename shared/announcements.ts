@@ -17,6 +17,8 @@ export type Announcement = {
   /** unix seconds */
   createdAt: number;
   updatedAt: number;
+  /** ฝั่งนักเรียน: ประกาศที่ยังไม่เคยเห็น */
+  isNew?: boolean;
 };
 
 /** ประกาศที่นักเรียนคอร์สนี้ควรเห็น */

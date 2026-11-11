@@ -74,6 +74,8 @@ export type CourseVideo = {
   /** 0–100 */
   percent: number;
   lastPositionSec: number;
+  /** คลิปเพิ่มมาไม่เกิน 7 วัน และนักเรียนยังไม่เคยเปิด */
+  isNew: boolean;
 };
 export type CourseChapter = { id: number; title: string; videos: CourseVideo[] };
 export type CourseOutline = {

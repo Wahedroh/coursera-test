@@ -29,15 +29,21 @@ const STUDENT_LIMIT = 20;
 announcements.get("/announcements", async (c) => {
   const id = await currentStudentId(c);
   if (id === null) return c.json({ error: "unauthorized" }, 401);
-  const s = await c.env.DB.prepare("SELECT course FROM students WHERE id = ?1").bind(id).first<{ course: Course }>();
+  const s = await c.env.DB.prepare("SELECT course, announcements_seen_at FROM students WHERE id = ?1")
+    .bind(id)
+    .first<{ course: Course; announcements_seen_at: number }>();
   if (!s) return c.json({ error: "unauthorized" }, 401);
   const [t1, t2] = targetsFor(s.course);
-  const { results } = await c.env.DB.prepare(
-    `SELECT ${COLS} FROM announcements WHERE target IN (?1, ?2) ORDER BY created_at DESC, id DESC LIMIT ?3`,
-  )
-    .bind(t1, t2, STUDENT_LIMIT)
-    .all<Row>();
-  return c.json({ announcements: results.map(toAnn) });
+  const [list] = await c.env.DB.batch<Row>([
+    c.env.DB.prepare(
+      `SELECT ${COLS} FROM announcements WHERE target IN (?1, ?2) ORDER BY created_at DESC, id DESC LIMIT ?3`,
+    ).bind(t1, t2, STUDENT_LIMIT),
+    // เปิดดูแล้ว: ครั้งหน้าประกาศเหล่านี้ไม่ใช่ "ใหม่"
+    c.env.DB.prepare("UPDATE students SET announcements_seen_at = unixepoch() WHERE id = ?1").bind(id),
+  ]);
+  return c.json({
+    announcements: list.results.map((r) => ({ ...toAnn(r), isNew: r.created_at > s.announcements_seen_at })),
+  });
 });
 
 // ---------- ครู ----------

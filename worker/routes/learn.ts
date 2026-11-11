@@ -34,7 +34,11 @@ type VideoRow = {
   last_position_sec: number | null;
   max_position_sec: number | null;
   last_watched_at: number | null;
+  is_new: number;
 };
+
+/** คลิปที่เพิ่มมาไม่เกินกี่วินาที นับเป็น "ใหม่" (7 วัน) */
+const NEW_VIDEO_SEC = 7 * 24 * 60 * 60;
 
 learn.get("/course", async (c) => {
   const course = c.get("course");
@@ -42,7 +46,8 @@ learn.get("/course", async (c) => {
     c.env.DB.prepare("SELECT id, title FROM chapters WHERE course = ?1 ORDER BY sort_order, id").bind(course),
     c.env.DB.prepare(
       `SELECT v.id, v.chapter_id, c.title AS chapter_title, v.title, v.duration_sec,
-              p.last_position_sec, p.max_position_sec, p.last_watched_at
+              p.last_position_sec, p.max_position_sec, p.last_watched_at,
+              (p.student_id IS NULL AND v.created_at > unixepoch() - ${NEW_VIDEO_SEC}) AS is_new
        FROM videos v JOIN chapters c ON c.id = v.chapter_id
        LEFT JOIN progress p ON p.video_id = v.id AND p.student_id = ?2
        WHERE c.course = ?1 ORDER BY v.sort_order, v.id`,
@@ -55,7 +60,14 @@ learn.get("/course", async (c) => {
   for (const v of vi.results as VideoRow[]) {
     const percent = percentOf(v.max_position_sec ?? 0, v.duration_sec);
     const last = v.last_position_sec ?? 0;
-    byId.get(v.chapter_id)?.videos.push({ id: v.id, title: v.title, durationSec: v.duration_sec, percent, lastPositionSec: last });
+    byId.get(v.chapter_id)?.videos.push({
+      id: v.id,
+      title: v.title,
+      durationSec: v.duration_sec,
+      percent,
+      lastPositionSec: last,
+      isNew: v.is_new === 1,
+    });
     if (v.last_watched_at && v.last_watched_at > latest) {
       latest = v.last_watched_at;
       resume = { videoId: v.id, title: v.title, lastPositionSec: last, percent };

@@ -1638,3 +1638,108 @@ a.ph-btn {
     font-size: 12.5px;
   }
 }
+
+/* ---------- ป้าย "ใหม่" ---------- */
+.ph-new {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.6;
+  vertical-align: 2px;
+}
+
+/* ---------- ภาพรวมทั้งห้อง (หลังบ้าน) ---------- */
+.ph-ov {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+.ph-ov__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: #50607a;
+}
+.ph-ov__scroll {
+  overflow-x: auto; /* ตารางเลื่อนแนวนอนในกรอบ ตัวหน้าไม่เลื่อน */
+}
+.ph-ov__table {
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--navy-d);
+}
+.ph-ov__table th,
+.ph-ov__table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #dfe5ee;
+  text-align: center;
+  white-space: nowrap;
+}
+.ph-ov__name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 140px;
+  text-align: left !important;
+  background: #f4f4f1;
+}
+.ph-ov__name a {
+  display: block;
+  color: var(--blue);
+  font-weight: 700;
+}
+.ph-ov__vh {
+  vertical-align: bottom;
+  font-weight: 600;
+}
+.ph-ov__vno {
+  display: block;
+  font-weight: 800;
+  color: var(--navy);
+}
+.ph-ov__vtitle {
+  display: block;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: #50607a;
+}
+.ph-ov__sum td,
+.ph-ov__sum th {
+  font-size: 12.5px;
+  color: #50607a;
+  background: #eef2f7;
+}
+.ph-ov__late {
+  color: #c62828;
+  font-weight: 600;
+}
+.ph-ov__cell {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.ph-ov__cell.is-none {
+  background: #eceff3;
+  color: #8592a6;
+}
+.ph-ov__cell.is-part {
+  background: #fff1c7;
+  color: #7a5300;
+}
+.ph-ov__cell.is-done {
+  background: #d7eedb;
+  color: #1b5e20;
+}

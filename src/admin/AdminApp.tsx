@@ -6,6 +6,7 @@ import { AdminLoginPage } from "./AdminLoginPage";
 import { AnnouncementsPage } from "./AnnouncementsPage";
 import { ContentPage } from "./ContentPage";
 import { DataPage } from "./DataPage";
+import { OverviewPage } from "./OverviewPage";
 import { StudentProgressPage } from "./StudentProgressPage";
 import { StudentsPage } from "./StudentsPage";
 
@@ -13,6 +14,7 @@ type State = "loading" | "guest" | "admin";
 
 const PAGES = [
   { path: "/admin", label: "นักเรียน" },
+  { path: "/admin/overview", label: "ภาพรวม" },
   { path: "/admin/content", label: "บทและคลิป" },
   { path: "/admin/announcements", label: "ประกาศ" },
   { path: "/admin/data", label: "ข้อมูล" },
@@ -95,6 +97,8 @@ export function AdminApp() {
         <StudentProgressPage studentId={Number(path.match(STUDENT_PATH)![1])} onUnauthorized={unauthorized} />
       ) : path === "/admin/content" ? (
         <ContentPage onUnauthorized={unauthorized} />
+      ) : path === "/admin/overview" ? (
+        <OverviewPage onUnauthorized={unauthorized} />
       ) : path === "/admin/data" ? (
         <DataPage onUnauthorized={unauthorized} />
       ) : path === "/admin/announcements" ? (
