@@ -1,5 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
+import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions } from "../../shared/questions";
 import type { Course } from "../../shared/validate";
 import { DOC_COLUMNS, DOC_ORDER, toDocInfo, type DocRow } from "../lib/documents";
 import { currentStudentId } from "../lib/session";
@@ -154,4 +155,79 @@ learn.post("/videos/:id/progress", async (c) => {
   }
   await c.env.DB.batch(stmts);
   return c.json({ ok: true });
+});
+
+// ---------- ถามครูใต้คลิป ----------
+
+/** เวลาเริ่มวันนี้ตามเวลาไทย (นับโควตาคำถามต่อวัน) */
+const TODAY_TH = "unixepoch('now', '+7 hours', 'start of day', '-7 hours')";
+const QUESTION_LIMIT = 100;
+
+const ownsVideo = (db: D1Database, id: number, course: Course) =>
+  db
+    .prepare("SELECT v.id FROM videos v JOIN chapters c ON c.id = v.chapter_id WHERE v.id = ?1 AND c.course = ?2")
+    .bind(id, course)
+    .first();
+
+const remainingToday = async (db: D1Database, studentId: number) => {
+  const r = await db
+    .prepare(`SELECT COUNT(*) AS n FROM questions WHERE student_id = ?1 AND created_at >= ${TODAY_TH}`)
+    .bind(studentId)
+    .first<{ n: number }>();
+  return Math.max(0, QUESTIONS_PER_DAY - (r?.n ?? 0));
+};
+
+// คำถามของคลิปนี้: ของตัวเอง + ของเพื่อน (ไม่ส่งชื่อผู้ถาม, ที่ครูซ่อนเห็นเฉพาะเจ้าของ)
+learn.get("/videos/:id/questions", async (c) => {
+  const id = posInt(c.req.param("id"));
+  const me = c.get("studentId");
+  if (!id || !(await ownsVideo(c.env.DB, id, c.get("course")))) return c.json({ error: "not_found" }, 404);
+  const { results } = await c.env.DB.prepare(
+    `SELECT id, position_sec, body, answer, answered_at, hidden, created_at, student_id = ?2 AS mine
+     FROM questions WHERE video_id = ?1 AND (hidden = 0 OR student_id = ?2)
+     ORDER BY created_at DESC, id DESC LIMIT ${QUESTION_LIMIT}`,
+  )
+    .bind(id, me)
+    .all<{ id: number; position_sec: number | null; body: string; answer: string | null; answered_at: number | null; hidden: number; created_at: number; mine: number }>();
+  const body: ClipQuestions = {
+    questions: results.map(
+      (r): ClipQuestion => ({
+        id: r.id,
+        positionSec: r.position_sec,
+        body: r.body,
+        answer: r.answer,
+        answeredAt: r.answered_at,
+        createdAt: r.created_at,
+        mine: r.mine === 1,
+        hidden: r.hidden === 1,
+      }),
+    ),
+    remainingToday: await remainingToday(c.env.DB, me),
+  };
+  return c.json(body);
+});
+
+learn.post("/videos/:id/questions", async (c) => {
+  const id = posInt(c.req.param("id"));
+  const me = c.get("studentId");
+  const b = ((await c.req.json().catch(() => null)) ?? {}) as Record<string, unknown>;
+  const text = typeof b.body === "string" ? b.body.trim().replace(/\r\n/g, "\n") : "";
+  const pos = b.positionSec === null || b.positionSec === undefined ? null : Number(b.positionSec);
+  if (!id) return c.json({ error: "validation" }, 400);
+  if (!text) return c.json({ error: "validation", message: "กรุณาพิมพ์คำถาม" }, 400);
+  if (text.length > QUESTION_MAX) return c.json({ error: "validation", message: `คำถามยาวเกิน ${QUESTION_MAX} ตัวอักษร` }, 400);
+  if (pos !== null && !(Number.isFinite(pos) && pos >= 0 && pos < 24 * 3600)) return c.json({ error: "validation" }, 400);
+  if (!(await ownsVideo(c.env.DB, id, c.get("course")))) return c.json({ error: "not_found" }, 404);
+  // ใส่แถวใหม่เฉพาะเมื่อยังไม่ครบโควตาวันนี้ (ตรวจในคำสั่งเดียว กันกดส่งพร้อมกันหลายครั้ง)
+  const r = await c.env.DB.prepare(
+    `INSERT INTO questions (student_id, video_id, position_sec, body)
+     SELECT ?1, ?2, ?3, ?4
+     WHERE (SELECT COUNT(*) FROM questions WHERE student_id = ?1 AND created_at >= ${TODAY_TH}) < ?5`,
+  )
+    .bind(me, id, pos === null ? null : Math.floor(pos), text, QUESTIONS_PER_DAY)
+    .run();
+  if (!r.meta.changes) {
+    return c.json({ error: "limit", message: `วันนี้ถามครบ ${QUESTIONS_PER_DAY} ข้อแล้ว พรุ่งนี้ถามได้อีกนะ` }, 429);
+  }
+  return c.json({ ok: true, remainingToday: await remainingToday(c.env.DB, me) });
 });

@@ -8,6 +8,7 @@ import { auth } from "./routes/auth";
 import { authFacebook } from "./routes/authFacebook";
 import { learn } from "./routes/learn";
 import { maintenance } from "./routes/maintenance";
+import { questions } from "./routes/questions";
 import { schools } from "./routes/schools";
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
@@ -30,6 +31,7 @@ app.route("/", adminContent);
 app.route("/", learn);
 app.route("/", announcements);
 app.route("/", maintenance);
+app.route("/", questions);
 app.route("/", schools);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));

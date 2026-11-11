@@ -8,6 +8,8 @@ import { loadYouTube, YTState, type YTPlayer } from "../lib/youtube";
 // - รายงานความคืบหน้าทุก 15 วินาที + ตอนหยุด/จบ/ออกจากหน้า
 
 export type ProgressReport = { position: number; delta: number; duration: number; keepalive: boolean };
+/** ให้ส่วนอื่นของหน้าอ่านเวลาปัจจุบัน / กระโดดไปนาทีที่ต้องการ (เช่น ช่องถามครู) */
+export type PlayerControl = { getTime: () => number; seek: (s: number) => void };
 
 type Props = {
   youtubeId: string;
@@ -15,6 +17,7 @@ type Props = {
   watermark: string;
   onProgress: (r: ProgressReport) => void;
   onEnded?: () => void;
+  controlRef?: { current: PlayerControl | null };
 };
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
@@ -28,7 +31,7 @@ const fmt = (s: number) => {
   return h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
 };
 
-export function ProtectedPlayer({ youtubeId, startAt, watermark, onProgress, onEnded }: Props) {
+export function ProtectedPlayer({ youtubeId, startAt, watermark, onProgress, onEnded, controlRef }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
@@ -183,6 +186,20 @@ export function ProtectedPlayer({ youtubeId, startAt, watermark, onProgress, onE
     p.seekTo(s, true);
     setTime(s);
   };
+
+  useEffect(() => {
+    if (!controlRef) return;
+    controlRef.current = {
+      getTime: () => playerRef.current?.getCurrentTime?.() ?? 0,
+      seek: (s) => {
+        if (playerRef.current && ready) seek(s);
+      },
+    };
+    return () => {
+      controlRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controlRef, ready]);
 
   const toggleFullscreen = async () => {
     const el = wrapRef.current;

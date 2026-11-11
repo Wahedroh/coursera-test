@@ -22,9 +22,11 @@ export type CloseYearInput = {
 };
 export type CloseYearCounts = { students: number; progress: number; documents: number; announcements: number };
 
-export const BACKUP_VERSION = 3; // 2 = เอกสารเป็นลิงก์ OneDrive, 3 = เพิ่มข้อมูลป้าย "ใหม่"
+export const BACKUP_VERSION = 4; // 2 = เอกสารเป็นลิงก์ OneDrive, 3 = เพิ่มข้อมูลป้าย "ใหม่", 4 = เพิ่มคำถามใต้คลิป
 /** เวอร์ชันไฟล์สำรองที่กู้คืนได้ (ไฟล์เวอร์ชัน 2 ไม่มีคอลัมน์ใหม่ จะใช้ค่าเริ่มต้นแทน) */
-export const RESTORABLE_VERSIONS = [2, 3];
+export const RESTORABLE_VERSIONS = [2, 3, 4];
+/** ตารางที่ไฟล์สำรองเวอร์ชันเก่าไม่มี (กู้คืนเป็นตารางว่าง) */
+export const BACKUP_TABLES_ADDED: Record<string, number> = { questions: 4 };
 /** ค่าเริ่มต้นของคอลัมน์ที่ไฟล์สำรองเวอร์ชันเก่าไม่มี (เป็นนิพจน์ SQL) */
 export const BACKUP_COLUMN_DEFAULTS: Record<string, string> = { announcements_seen_at: "0", created_at: "unixepoch()" };
 
@@ -53,6 +55,7 @@ export const BACKUP_TABLES = {
   documents: ["id", "video_id", "kind", "title", "url", "created_at"],
   progress: ["student_id", "video_id", "last_position_sec", "max_position_sec", "watch_seconds", "last_watched_at"],
   announcements: ["id", "target", "title", "body", "created_at", "updated_at"],
+  questions: ["id", "student_id", "video_id", "position_sec", "body", "answer", "answered_at", "hidden", "created_at"],
 } as const;
 export type BackupTable = keyof typeof BACKUP_TABLES;
 

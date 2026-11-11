@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
   BACKUP_COLUMN_DEFAULTS,
   BACKUP_TABLES,
+  BACKUP_TABLES_ADDED,
   BACKUP_VERSION,
   D1_FREE_BYTES,
   RESTORABLE_VERSIONS,
@@ -159,6 +160,8 @@ maintenance.post("/admin/restore", async (c) => {
   }
   const names = Object.keys(BACKUP_TABLES) as BackupTable[];
   for (const t of names) {
+    // ไฟล์เวอร์ชันเก่ายังไม่มีตารางนี้ → กู้คืนเป็นตารางว่าง
+    if (b.tables[t] === undefined && (BACKUP_TABLES_ADDED[t] ?? 0) > Number(b.version)) b.tables[t] = [];
     const rows = b.tables[t];
     if (!Array.isArray(rows) || rows.some((r) => !r || typeof r !== "object" || Array.isArray(r))) {
       return c.json({ error: "validation", message: `ไฟล์สำรองไม่ครบ (ตาราง ${t})` }, 400);
@@ -167,7 +170,7 @@ maintenance.post("/admin/restore", async (c) => {
   const db = c.env.DB;
   const stmts: D1PreparedStatement[] = [
     // ลูกก่อนแม่
-    ...["sessions", "oauth_pending", "progress", "documents", "videos", "chapters", "oauth_accounts", "students", "schools", "announcements"].map(
+    ...["sessions", "oauth_pending", "questions", "progress", "documents", "videos", "chapters", "oauth_accounts", "students", "schools", "announcements"].map(
       (t) => db.prepare(`DELETE FROM ${t}`),
     ),
   ];
