@@ -19,6 +19,22 @@ export type ClipQuestion = {
 };
 export type ClipQuestions = { questions: ClipQuestion[]; remainingToday: number };
 
+/** หน้า "คำถามของฉัน": คำถามของนักเรียนคนนี้ทุกคลิป */
+export type MyQuestion = {
+  id: number;
+  videoId: number;
+  videoTitle: string;
+  positionSec: number | null;
+  body: string;
+  answer: string | null;
+  answeredAt: number | null;
+  createdAt: number;
+  /** ครูตอบ (หรือแก้คำตอบ) หลังจากที่นักเรียนเห็นครั้งล่าสุด */
+  isNew: boolean;
+  hidden: boolean;
+};
+export type MyQuestions = { questions: MyQuestion[] };
+
 export type QuestionTab = "pending" | "answered" | "hidden";
 export const QUESTION_TABS: Record<QuestionTab, string> = { pending: "รอตอบ", answered: "ตอบแล้ว", hidden: "ซ่อนแล้ว" };
 

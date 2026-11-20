@@ -1,7 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
 import type { HomeData, HomeResume, HomeVideo } from "../../shared/home";
-import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions } from "../../shared/questions";
+import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions, type MyQuestions } from "../../shared/questions";
 import type { Course } from "../../shared/validate";
 import { DOC_COLUMNS, DOC_ORDER, toDocInfo, type DocRow } from "../lib/documents";
 import { currentStudentId } from "../lib/session";
@@ -27,6 +27,7 @@ const requireApproved: MiddlewareHandler<{ Bindings: Env; Variables: Vars }> = a
 
 learn.use("/course", requireApproved);
 learn.use("/home", requireApproved);
+learn.use("/my-questions", requireApproved);
 learn.use("/videos/*", requireApproved);
 
 type VideoRow = {
@@ -195,13 +196,18 @@ learn.get("/videos/:id/questions", async (c) => {
   const id = posInt(c.req.param("id"));
   const me = c.get("studentId");
   if (!id || !(await ownsVideo(c.env.DB, id, c.get("course")))) return c.json({ error: "not_found" }, 404);
-  const { results } = await c.env.DB.prepare(
-    `SELECT id, position_sec, body, answer, answered_at, hidden, created_at, student_id = ?2 AS mine
-     FROM questions WHERE video_id = ?1 AND (hidden = 0 OR student_id = ?2)
-     ORDER BY created_at DESC, id DESC LIMIT ${QUESTION_LIMIT}`,
-  )
-    .bind(id, me)
-    .all<{ id: number; position_sec: number | null; body: string; answer: string | null; answered_at: number | null; hidden: number; created_at: number; mine: number }>();
+  const [list] = await c.env.DB.batch([
+    c.env.DB.prepare(
+      `SELECT id, position_sec, body, answer, answered_at, hidden, created_at, student_id = ?2 AS mine
+       FROM questions WHERE video_id = ?1 AND (hidden = 0 OR student_id = ?2)
+       ORDER BY created_at DESC, id DESC LIMIT ${QUESTION_LIMIT}`,
+    ).bind(id, me),
+    // เห็นคำตอบของคำถามตัวเองในคลิปนี้แล้ว
+    c.env.DB.prepare(
+      "UPDATE questions SET answer_seen_at = unixepoch() WHERE video_id = ?1 AND student_id = ?2 AND answered_at IS NOT NULL",
+    ).bind(id, me),
+  ]);
+  const results = list.results as { id: number; position_sec: number | null; body: string; answer: string | null; answered_at: number | null; hidden: number; created_at: number; mine: number }[];
   const body: ClipQuestions = {
     questions: results.map(
       (r): ClipQuestion => ({
@@ -305,6 +311,39 @@ learn.get("/home", async (c) => {
     stats: { done, total: rows.length, weekSeconds: (week.results[0] as { n: number }).n },
     alerts: { newAnswers: (answers.results[0] as { n: number }).n, inProgress },
     newVideos,
+  };
+  return c.json(body);
+});
+
+// คำถามของฉันทุกคลิป (เปิดหน้านี้ = เห็นคำตอบทั้งหมดแล้ว)
+learn.get("/my-questions", async (c) => {
+  const me = c.get("studentId");
+  const db = c.env.DB;
+  const [list] = await db.batch([
+    db
+      .prepare(
+        `SELECT q.id, q.video_id, v.title AS video_title, q.position_sec, q.body, q.answer, q.answered_at, q.created_at, q.hidden,
+                (q.answered_at > COALESCE(q.answer_seen_at, 0)) AS is_new
+         FROM questions q JOIN videos v ON v.id = q.video_id
+         WHERE q.student_id = ?1 ORDER BY COALESCE(q.answered_at, q.created_at) DESC, q.id DESC LIMIT ${QUESTION_LIMIT}`,
+      )
+      .bind(me),
+    db.prepare("UPDATE questions SET answer_seen_at = unixepoch() WHERE student_id = ?1 AND answered_at IS NOT NULL").bind(me),
+  ]);
+  type Row = { id: number; video_id: number; video_title: string; position_sec: number | null; body: string; answer: string | null; answered_at: number | null; created_at: number; hidden: number; is_new: number | null };
+  const body: MyQuestions = {
+    questions: (list.results as Row[]).map((r) => ({
+      id: r.id,
+      videoId: r.video_id,
+      videoTitle: r.video_title,
+      positionSec: r.position_sec,
+      body: r.body,
+      answer: r.answer,
+      answeredAt: r.answered_at,
+      createdAt: r.created_at,
+      isNew: r.is_new === 1,
+      hidden: r.hidden === 1,
+    })),
   };
   return c.json(body);
 });
