@@ -6,9 +6,9 @@ import { QuestionPanel } from "../components/QuestionPanel";
 import { api, ApiError } from "../lib/api";
 import { navigate } from "../lib/router";
 
-type Props = { me: Me; videoId: number; backTo: string; onAuthError: (status: number) => void };
+type Props = { me: Me; videoId: number; jumpTo?: number; backTo: string; onAuthError: (status: number) => void };
 
-export function WatchPage({ me, videoId, backTo, onAuthError }: Props) {
+export function WatchPage({ me, videoId, jumpTo, backTo, onAuthError }: Props) {
   const [video, setVideo] = useState<WatchVideo | null>(null);
   const [error, setError] = useState("");
   const player = useRef<PlayerControl | null>(null);
@@ -36,9 +36,13 @@ export function WatchPage({ me, videoId, backTo, onAuthError }: Props) {
     [videoId, onAuthError],
   );
 
-  // ดูจบเกือบทั้งคลิปแล้ว → เริ่มใหม่จากต้น
-  const startAt =
-    video && video.durationSec && video.lastPositionSec >= video.durationSec - 10 ? 0 : (video?.lastPositionSec ?? 0);
+  // ขอเปิดตรงนาที (ต้องอยู่ในความยาวคลิป) / ดูจบเกือบทั้งคลิปแล้ว → เริ่มใหม่จากต้น / ไม่งั้นเล่นต่อจากจุดค้าง
+  const jumpOk = jumpTo !== undefined && video !== null && (!video.durationSec || jumpTo < video.durationSec);
+  const startAt = jumpOk
+    ? jumpTo!
+    : video && video.durationSec && video.lastPositionSec >= video.durationSec - 10
+      ? 0
+      : (video?.lastPositionSec ?? 0);
 
   return (
     <div className="ph-watch">
@@ -63,7 +67,7 @@ export function WatchPage({ me, videoId, backTo, onAuthError }: Props) {
           <section className="ph-card ph-watch__info">
             <p className="ph-watch__chapter">{video.chapterTitle}</p>
             <h1 className="ph-watch__title">{video.title}</h1>
-            {startAt > 0 ? <p className="ph-small ph-m0">เล่นต่อจากจุดที่ดูค้างไว้</p> : null}
+            {jumpOk ? null : startAt > 0 ? <p className="ph-small ph-m0">เล่นต่อจากจุดที่ดูค้างไว้</p> : null}
             {video.documents.length ? (
               <div className="ph-dl">
                 {video.documents.map((d) => (

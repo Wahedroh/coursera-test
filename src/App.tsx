@@ -83,7 +83,10 @@ export function App() {
     } else if (!approved) {
       page = <HomePage me={auth.me} onLogout={logout} />;
     } else if (watch) {
-      page = <WatchPage me={auth.me} videoId={Number(watch[1])} backTo={backTo.current} onAuthError={authError} />;
+      // ?t=วินาที → เปิดตรงนาทีนั้น (เช่น จากหน้าคำถามของฉัน); ค่าที่ไม่ใช่จำนวนเต็มบวกไม่สนใจ
+      const t = new URLSearchParams(window.location.search).get("t");
+      const jumpTo = t && /^\d+$/.test(t) ? Number(t) : undefined;
+      page = <WatchPage me={auth.me} videoId={Number(watch[1])} jumpTo={jumpTo} backTo={backTo.current} onAuthError={authError} />;
     } else if (path === "/clips") {
       page = <ClipsPage onAuthError={authError} />;
     } else if (path === "/questions") {
