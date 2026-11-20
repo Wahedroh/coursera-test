@@ -12,7 +12,11 @@ type Filter = "all" | "inactive" | "never";
 export function OverviewPage({ onUnauthorized }: { onUnauthorized: () => void }) {
   const [course, setCourse] = useState<Course>("m12");
   const [data, setData] = useState<ClassOverview | null>(null);
-  const [filter, setFilter] = useState<Filter>("all");
+  // ?filter=inactive จากหน้าสรุป
+  const [filter, setFilter] = useState<Filter>(() => {
+    const f = new URLSearchParams(window.location.search).get("filter");
+    return f === "inactive" || f === "never" ? f : "all";
+  });
   const [error, setError] = useState("");
 
   const handle = useCallback(

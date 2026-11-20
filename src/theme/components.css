@@ -2323,3 +2323,19 @@ button.ph-stat {
 body.has-tabbar .ph-footer {
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
+
+/* เมนูหลังบ้านบนมือถือ: แถวเดียว เลื่อนซ้ายขวา */
+@media (max-width: 720px) {
+  .ph-adminnav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ph-adminnav::-webkit-scrollbar {
+    display: none;
+  }
+  .ph-adminnav__link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
