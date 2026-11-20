@@ -4,6 +4,7 @@ import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions 
 import type { Course } from "../../shared/validate";
 import { DOC_COLUMNS, DOC_ORDER, toDocInfo, type DocRow } from "../lib/documents";
 import { currentStudentId } from "../lib/session";
+import { TH_DAY, TH_DAY_MINUS } from "../lib/thaiDay";
 
 // ฝั่งนักเรียน: รายการบท-คลิป, ข้อมูลคลิป, บันทึกความคืบหน้า (ต้องเป็นนักเรียนที่ครูยืนยันแล้ว)
 
@@ -149,6 +150,16 @@ learn.post("/videos/:id/progress", async (c) => {
          last_watched_at = unixepoch()`,
     ).bind(c.get("studentId"), id, pos, add),
   ];
+  // เวลาเรียนรายวัน (หน้าแรกแสดง 7 วันล่าสุด) + ลบวันที่เก่ากว่า 8 วัน
+  if (add > 0) {
+    stmts.push(
+      c.env.DB.prepare(
+        `INSERT INTO watch_daily (student_id, day, seconds) VALUES (?1, ${TH_DAY}, ?2)
+         ON CONFLICT (student_id, day) DO UPDATE SET seconds = seconds + excluded.seconds`,
+      ).bind(c.get("studentId"), add),
+    );
+  }
+  stmts.push(c.env.DB.prepare(`DELETE FROM watch_daily WHERE student_id = ?1 AND day < ${TH_DAY_MINUS(7)}`).bind(c.get("studentId")));
   // ความยาวคลิปยังไม่รู้ → ใช้ค่าที่ตัวเล่นรายงานมา
   if (owned.duration_sec === null && dur) {
     stmts.push(c.env.DB.prepare("UPDATE videos SET duration_sec = ?1 WHERE id = ?2 AND duration_sec IS NULL").bind(dur, id));

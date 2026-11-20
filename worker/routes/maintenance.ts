@@ -170,7 +170,7 @@ maintenance.post("/admin/restore", async (c) => {
   const db = c.env.DB;
   const stmts: D1PreparedStatement[] = [
     // ลูกก่อนแม่
-    ...["sessions", "oauth_pending", "questions", "progress", "documents", "videos", "chapters", "oauth_accounts", "students", "schools", "announcements"].map(
+    ...["sessions", "oauth_pending", "watch_daily", "questions", "progress", "documents", "videos", "chapters", "oauth_accounts", "students", "schools", "announcements"].map(
       (t) => db.prepare(`DELETE FROM ${t}`),
     ),
   ];
