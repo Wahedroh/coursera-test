@@ -1,5 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
+import type { HomeData, HomeResume, HomeVideo } from "../../shared/home";
 import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions } from "../../shared/questions";
 import type { Course } from "../../shared/validate";
 import { DOC_COLUMNS, DOC_ORDER, toDocInfo, type DocRow } from "../lib/documents";
@@ -25,6 +26,7 @@ const requireApproved: MiddlewareHandler<{ Bindings: Env; Variables: Vars }> = a
 };
 
 learn.use("/course", requireApproved);
+learn.use("/home", requireApproved);
 learn.use("/videos/*", requireApproved);
 
 type VideoRow = {
@@ -241,4 +243,68 @@ learn.post("/videos/:id/questions", async (c) => {
     return c.json({ error: "limit", message: `วันนี้ถามครบ ${QUESTIONS_PER_DAY} ข้อแล้ว พรุ่งนี้ถามได้อีกนะ` }, 429);
   }
   return c.json({ ok: true, remainingToday: await remainingToday(c.env.DB, me) });
+});
+
+// ---------- หน้าแรกนักเรียน ----------
+
+learn.get("/home", async (c) => {
+  const course = c.get("course");
+  const me = c.get("studentId");
+  const db = c.env.DB;
+  const [ch, vi, week, answers] = await db.batch([
+    db.prepare("SELECT id FROM chapters WHERE course = ?1 ORDER BY sort_order, id").bind(course),
+    // คลิปทั้งคอร์สตามลำดับที่นักเรียนเห็น (บท → คลิป)
+    db
+      .prepare(
+        `SELECT v.id, v.chapter_id, v.title, v.duration_sec, p.last_position_sec, p.max_position_sec, p.last_watched_at,
+                (p.student_id IS NULL AND v.created_at > unixepoch() - ${NEW_VIDEO_SEC}) AS is_new
+         FROM videos v JOIN chapters c ON c.id = v.chapter_id
+         LEFT JOIN progress p ON p.video_id = v.id AND p.student_id = ?2
+         WHERE c.course = ?1 ORDER BY c.sort_order, c.id, v.sort_order, v.id`,
+      )
+      .bind(course, me),
+    db.prepare(`SELECT COALESCE(SUM(seconds), 0) AS n FROM watch_daily WHERE student_id = ?1 AND day >= ${TH_DAY_MINUS(6)}`).bind(me),
+    db
+      .prepare("SELECT COUNT(*) AS n FROM questions WHERE student_id = ?1 AND answered_at > COALESCE(answer_seen_at, 0)")
+      .bind(me),
+  ]);
+  type Row = VideoRow & { chapter_id: number };
+  const rows = vi.results as Row[];
+  // ลำดับบท และลำดับคลิปในบท (เริ่มที่ 1)
+  const chapterNo = new Map<number, number>();
+  const chapterSize = new Map<number, number>();
+  const indexIn = new Map<number, number>();
+  (ch.results as { id: number }[]).forEach((x, i) => chapterNo.set(x.id, i + 1));
+  for (const v of rows) {
+    const n = (chapterSize.get(v.chapter_id) ?? 0) + 1;
+    chapterSize.set(v.chapter_id, n);
+    indexIn.set(v.id, n);
+  }
+  const pct = (v: Row) => percentOf(v.max_position_sec ?? 0, v.duration_sec);
+  const toResume = (v: Row): HomeResume => ({
+    videoId: v.id,
+    title: v.title,
+    chapterNo: chapterNo.get(v.chapter_id)!,
+    indexInChapter: indexIn.get(v.id)!,
+    chapterCount: chapterSize.get(v.chapter_id)!,
+    lastPositionSec: v.last_position_sec ?? 0,
+    percent: pct(v),
+    started: v.last_watched_at !== null,
+  });
+  const byLatest = (a: Row, b: Row) => (b.last_watched_at ?? 0) - (a.last_watched_at ?? 0);
+  const watched = rows.filter((v) => v.last_watched_at !== null).sort(byLatest);
+  const resumeRow =
+    watched.find((v) => pct(v) < 100) ?? rows.find((v) => pct(v) < 100) ?? watched[0] ?? null;
+  const done = rows.filter((v) => pct(v) >= 100).length;
+  const inProgress = rows.filter((v) => v.last_watched_at !== null && pct(v) < 100).length;
+  const newVideos: HomeVideo[] = rows
+    .filter((v) => v.is_new === 1)
+    .map((v) => ({ id: v.id, title: v.title, chapterNo: chapterNo.get(v.chapter_id)!, durationSec: v.duration_sec }));
+  const body: HomeData = {
+    resume: resumeRow ? toResume(resumeRow) : null,
+    stats: { done, total: rows.length, weekSeconds: (week.results[0] as { n: number }).n },
+    alerts: { newAnswers: (answers.results[0] as { n: number }).n, inProgress },
+    newVideos,
+  };
+  return c.json(body);
 });
