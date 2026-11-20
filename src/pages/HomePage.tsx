@@ -49,7 +49,7 @@ export function HomePage({ me, onLogout }: Props) {
               <dt>เบอร์นักเรียน</dt>
               <dd>{me.studentPhone}</dd>
             </dl>
-            <button className="ph-btn ph-btn--ghost" type="button" onClick={() => navigate("/account")}>
+            <button className="ph-btn ph-btn--ghost" type="button" onClick={() => navigate("/account/password")}>
               เปลี่ยนรหัสผ่าน
             </button>
             <button className="ph-btn ph-btn--ghost" type="button" onClick={logout} disabled={busy}>

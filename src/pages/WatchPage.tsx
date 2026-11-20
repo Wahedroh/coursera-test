@@ -6,9 +6,9 @@ import { QuestionPanel } from "../components/QuestionPanel";
 import { api, ApiError } from "../lib/api";
 import { navigate } from "../lib/router";
 
-type Props = { me: Me; videoId: number; onAuthError: (status: number) => void };
+type Props = { me: Me; videoId: number; backTo: string; onAuthError: (status: number) => void };
 
-export function WatchPage({ me, videoId, onAuthError }: Props) {
+export function WatchPage({ me, videoId, backTo, onAuthError }: Props) {
   const [video, setVideo] = useState<WatchVideo | null>(null);
   const [error, setError] = useState("");
   const player = useRef<PlayerControl | null>(null);
@@ -43,8 +43,8 @@ export function WatchPage({ me, videoId, onAuthError }: Props) {
   return (
     <div className="ph-watch">
       <div className="ph-watch__top">
-        <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate("/")}>
-          ← รายการคลิป
+        <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate(backTo)}>
+          ← กลับ
         </button>
       </div>
 

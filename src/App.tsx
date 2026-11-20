@@ -3,10 +3,13 @@ import type { Me } from "../shared/validate";
 import { api, ApiError } from "./lib/api";
 import { navigate, usePath } from "./lib/router";
 import { AccountPage } from "./pages/AccountPage";
-import { CoursePage } from "./pages/CoursePage";
+import { ClipsPage } from "./pages/ClipsPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { MyQuestionsPage } from "./pages/MyQuestionsPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { StudentHomePage } from "./pages/StudentHomePage";
 import { WatchPage } from "./pages/WatchPage";
 
 type Auth = { state: "loading" } | { state: "guest"; notice?: string } | { state: "student"; me: Me };
@@ -14,12 +17,18 @@ type Auth = { state: "loading" } | { state: "guest"; notice?: string } | { state
 const KICKED = "บัญชีนี้ถูกเข้าใช้จากเครื่องอื่น หรือหมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่";
 const GUEST_PATHS = ["/login", "/register", "/register/facebook"];
 const WATCH_PATH = /^\/watch\/(\d+)$/;
+/** หน้าที่นักเรียนแต่ละสถานะเปิดได้ (นอกจากหน้าดูคลิป) */
+const APPROVED_PATHS = ["/", "/clips", "/questions", "/account", "/account/password"];
+const OTHER_PATHS = ["/", "/account/password"];
 
 export function App() {
   const path = usePath();
   const [auth, setAuth] = useState<Auth>({ state: "loading" });
   const authRef = useRef(auth);
   authRef.current = auth;
+  // หน้าล่าสุดก่อนเข้าดูคลิป: ปุ่ม "← กลับ" ในหน้าดูคลิปพากลับไปที่นี่
+  const backTo = useRef("/");
+  if (!WATCH_PATH.test(path)) backTo.current = path + (path === "/clips" ? window.location.search : "");
 
   const loadMe = useCallback(async () => {
     try {
@@ -48,8 +57,9 @@ export function App() {
   useEffect(() => {
     if (auth.state === "guest" && !GUEST_PATHS.includes(path)) navigate("/login", true);
     if (auth.state === "student") {
-      const canWatch = auth.me.status === "approved" && WATCH_PATH.test(path);
-      if (path !== "/" && path !== "/account" && !canWatch) navigate("/", true);
+      const approved = auth.me.status === "approved";
+      const allowed = approved ? APPROVED_PATHS.includes(path) || WATCH_PATH.test(path) : OTHER_PATHS.includes(path);
+      if (!allowed) navigate("/", true);
     }
   }, [auth, path]);
 
@@ -67,14 +77,21 @@ export function App() {
   if (auth.state === "student") {
     const watch = path.match(WATCH_PATH);
     const logout = () => setAuth({ state: "guest" });
-    if (path === "/account") {
-      page = <AccountPage onAuthError={authError} />;
-    } else if (auth.me.status === "approved" && watch) {
-      page = <WatchPage me={auth.me} videoId={Number(watch[1])} onAuthError={authError} />;
-    } else if (auth.me.status === "approved") {
-      page = <CoursePage me={auth.me} onLogout={logout} onAuthError={authError} />;
-    } else {
+    const approved = auth.me.status === "approved";
+    if (path === "/account/password") {
+      page = <AccountPage backTo={approved ? "/account" : "/"} onAuthError={authError} />;
+    } else if (!approved) {
       page = <HomePage me={auth.me} onLogout={logout} />;
+    } else if (watch) {
+      page = <WatchPage me={auth.me} videoId={Number(watch[1])} backTo={backTo.current} onAuthError={authError} />;
+    } else if (path === "/clips") {
+      page = <ClipsPage onAuthError={authError} />;
+    } else if (path === "/questions") {
+      page = <MyQuestionsPage onAuthError={authError} />;
+    } else if (path === "/account") {
+      page = <ProfilePage me={auth.me} onLogout={logout} />;
+    } else {
+      page = <StudentHomePage me={auth.me} onAuthError={authError} />;
     }
   } else if (auth.state === "guest") {
     page =

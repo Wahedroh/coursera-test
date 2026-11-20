@@ -15,9 +15,10 @@ function loadOnce() {
   return recent.req;
 }
 
-/** ประกาศจากครูที่นักเรียนคนนี้ควรเห็น (ทุกคน + คอร์สตัวเอง) */
-export function AnnouncementList() {
+/** ประกาศจากครูที่นักเรียนคนนี้ควรเห็น (ทุกคน + คอร์สตัวเอง); limit = แสดงกี่อันก่อนกด "ดูประกาศทั้งหมด" */
+export function AnnouncementList({ limit }: { limit?: number }) {
   const [items, setItems] = useState<Announcement[] | null>(null);
+  const [all, setAll] = useState(false);
 
   useEffect(() => {
     loadOnce()
@@ -33,7 +34,7 @@ export function AnnouncementList() {
         📢 ประกาศจากครู
       </h2>
       <ul className="ph-announce__list">
-        {items.map((a) => (
+        {(all || !limit ? items : items.slice(0, limit)).map((a) => (
           <li key={a.id} className="ph-announce__item">
             <h3 className="ph-announce__title">
               {a.isNew ? <span className="ph-new">ใหม่</span> : null}
@@ -44,6 +45,11 @@ export function AnnouncementList() {
           </li>
         ))}
       </ul>
+      {limit && !all && items.length > limit ? (
+        <button type="button" className="ph-link ph-announce__more" onClick={() => setAll(true)}>
+          ดูประกาศทั้งหมด ({items.length})
+        </button>
+      ) : null}
     </section>
   );
 }
