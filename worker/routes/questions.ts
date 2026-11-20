@@ -39,12 +39,6 @@ const posInt = (v: string) => {
   return Number.isInteger(n) && n > 0 ? n : null;
 };
 
-// ตัวเลขบนเมนู "คำถาม"
-questions.get("/admin/questions/pending-count", async (c) => {
-  const r = await c.env.DB.prepare(`SELECT COUNT(*) AS n FROM questions q WHERE ${TAB_WHERE.pending}`).first<{ n: number }>();
-  return c.json({ pending: r?.n ?? 0 });
-});
-
 questions.get("/admin/questions", async (c) => {
   const tab = c.req.query("tab") ?? "pending";
   const course = c.req.query("course") || null;

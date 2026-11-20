@@ -5,10 +5,10 @@ import { StickerTitle } from "../components/StickerTitle";
 import { api, ApiError } from "../lib/api";
 import { navigate } from "../lib/router";
 
-type Props = { onAuthError: () => void };
+type Props = { backTo: string; onAuthError: () => void };
 
 /** นักเรียนเปลี่ยนรหัสผ่านเอง (สมัครด้วย Facebook และยังไม่มีรหัส → ตั้งรหัสใหม่ได้เลย) */
-export function AccountPage({ onAuthError }: Props) {
+export function AccountPage({ backTo, onAuthError }: Props) {
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -68,7 +68,7 @@ export function AccountPage({ onAuthError }: Props) {
       <StickerTitle top="เรียนย้อนหลัง" bottom="ฟิสิกส์" subtitle={hasPassword === false ? "ตั้งรหัสผ่าน" : "เปลี่ยนรหัสผ่าน"} />
       <div className="ph-stack">
         <div>
-          <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate("/")}>
+          <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate(backTo)}>
             ← กลับหน้าแรก
           </button>
         </div>
@@ -78,7 +78,7 @@ export function AccountPage({ onAuthError }: Props) {
               <p className="ph-status ph-status--approved" role="status">
                 บันทึกรหัสผ่านใหม่แล้ว
               </p>
-              <button type="button" className="ph-btn" onClick={() => navigate("/")}>
+              <button type="button" className="ph-btn" onClick={() => navigate(backTo)}>
                 กลับหน้าแรก
               </button>
             </div>

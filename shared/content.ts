@@ -97,6 +97,10 @@ export type WatchVideo = {
   documents: DocumentInfo[];
 };
 
+/** ดูค้าง = ยังไม่จบ และเคยดูไปแล้วบ้าง (เปิดแล้วออกที่ 0:00 ไม่นับ) — ใช้ทั้งหน้าแรกและหน้าคลิปทั้งหมด */
+export const isInProgress = (percent: number, lastPositionSec: number) =>
+  percent < 100 && (percent > 0 || lastPositionSec > 0);
+
 export function percentOf(maxPos: number, duration: number | null): number {
   if (!duration || duration <= 0) return 0;
   // เหลือไม่ถึง 10 วินาทีถือว่าดูจบ

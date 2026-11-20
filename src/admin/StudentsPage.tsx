@@ -10,10 +10,16 @@ const TABS: Tab[] = ["pending", "approved", "rejected", "suspended", "all"];
 const fmtDate = (sec: number) =>
   new Date(sec * 1000).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
 
-type Props = { onUnauthorized: () => void };
+type Props = { onUnauthorized: () => void; onChanged?: () => void };
 
-export function StudentsPage({ onUnauthorized }: Props) {
-  const [tab, setTab] = useState<Tab>("pending");
+/** ?status=approved จากหน้าสรุป → เปิดแท็บนั้น */
+const initialTab = (): Tab => {
+  const t = new URLSearchParams(window.location.search).get("status") as Tab | null;
+  return t && TABS.includes(t) ? t : "pending";
+};
+
+export function StudentsPage({ onUnauthorized, onChanged }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [course, setCourse] = useState<Course | "">("");
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
@@ -59,6 +65,7 @@ export function StudentsPage({ onUnauthorized }: Props) {
     try {
       await api<AdminStudent>(path, body);
       await load();
+      onChanged?.(); // ตัวเลขรอยืนยันบนเมนู
     } catch (err) {
       handle(err);
     }

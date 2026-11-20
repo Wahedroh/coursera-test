@@ -44,7 +44,7 @@ export function StudentProgressPage({ studentId, onUnauthorized }: Props) {
   return (
     <section className="ph-admin">
       <div>
-        <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate("/admin")}>
+        <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={() => navigate("/admin/students")}>
           ← รายชื่อนักเรียน
         </button>
       </div>

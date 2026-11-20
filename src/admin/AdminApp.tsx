@@ -10,11 +10,14 @@ import { OverviewPage } from "./OverviewPage";
 import { QuestionsPage } from "./QuestionsPage";
 import { StudentProgressPage } from "./StudentProgressPage";
 import { StudentsPage } from "./StudentsPage";
+import { SummaryPage } from "./SummaryPage";
+import type { AdminBadges } from "../../shared/admin";
 
 type State = "loading" | "guest" | "admin";
 
 const PAGES = [
-  { path: "/admin", label: "นักเรียน" },
+  { path: "/admin", label: "สรุป" },
+  { path: "/admin/students", label: "นักเรียน" },
   { path: "/admin/overview", label: "ภาพรวม" },
   { path: "/admin/questions", label: "คำถาม" },
   { path: "/admin/content", label: "บทและคลิป" },
@@ -27,7 +30,7 @@ export function AdminApp() {
   const path = usePath();
   const [state, setState] = useState<State>("loading");
   const [notice, setNotice] = useState<string>();
-  const [pending, setPending] = useState(0);
+  const [badges, setBadges] = useState<AdminBadges>({ questions: 0, students: 0 });
 
   useEffect(() => {
     api("/admin/me")
@@ -40,10 +43,10 @@ export function AdminApp() {
     if (state === "admin" && !PAGES.some((p) => p.path === path) && !STUDENT_PATH.test(path)) navigate("/admin", true);
   }, [state, path]);
 
-  // ตัวเลขคำถามที่รอตอบบนเมนู (โหลดใหม่ทุกครั้งที่เปลี่ยนหน้า)
+  // ตัวเลขบนเมนู: คำถามรอตอบ / นักเรียนรอยืนยัน (โหลดใหม่ทุกครั้งที่เปลี่ยนหน้า)
   const loadPending = useCallback(() => {
-    api<{ pending: number }>("/admin/questions/pending-count")
-      .then((r) => setPending(r.pending))
+    api<AdminBadges>("/admin/badges")
+      .then(setBadges)
       .catch(() => undefined);
   }, []);
   useEffect(() => {
@@ -79,7 +82,7 @@ export function AdminApp() {
       <div className="ph-adminbar">
         <StickerTitle
           top="หลังบ้าน"
-          bottom={STUDENT_PATH.test(path) ? "ประวัติการเรียน" : (PAGES.find((p) => p.path === path)?.label ?? "นักเรียน")}
+          bottom={STUDENT_PATH.test(path) ? "ประวัติการเรียน" : (PAGES.find((p) => p.path === path)?.label ?? "สรุป")}
           size="sm"
         />
         <button type="button" className="ph-btn ph-btn--sm ph-btn--light" onClick={logout}>
@@ -89,7 +92,8 @@ export function AdminApp() {
       <nav className="ph-adminnav" aria-label="เมนูหลังบ้าน">
         {PAGES.map((p) => {
           // หน้าประวัติรายคนอยู่ใต้เมนู "นักเรียน"
-          const active = path === p.path || (p.path === "/admin" && STUDENT_PATH.test(path));
+          const active = path === p.path || (p.path === "/admin/students" && STUDENT_PATH.test(path));
+          const count = p.path === "/admin/questions" ? badges.questions : p.path === "/admin/students" ? badges.students : 0;
           return (
             <a
               key={p.path}
@@ -102,9 +106,9 @@ export function AdminApp() {
               }}
             >
               {p.label}
-              {p.path === "/admin/questions" && pending > 0 ? (
-                <span className="ph-adminnav__count" aria-label={`รอตอบ ${pending} ข้อ`}>
-                  {pending}
+              {count > 0 ? (
+                <span className="ph-adminnav__count" aria-label={p.path === "/admin/questions" ? `รอตอบ ${count} ข้อ` : `รอยืนยัน ${count} คน`}>
+                  {count}
                 </span>
               ) : null}
             </a>
@@ -123,8 +127,10 @@ export function AdminApp() {
         <DataPage onUnauthorized={unauthorized} />
       ) : path === "/admin/announcements" ? (
         <AnnouncementsPage onUnauthorized={unauthorized} />
+      ) : path === "/admin/students" ? (
+        <StudentsPage onUnauthorized={unauthorized} onChanged={loadPending} />
       ) : (
-        <StudentsPage onUnauthorized={unauthorized} />
+        <SummaryPage onUnauthorized={unauthorized} />
       )}
     </>
   );

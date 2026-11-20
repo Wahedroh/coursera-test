@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import {
   ADMIN_PAGE_SIZE,
+  type AdminBadges,
+  type AdminSummary,
   isStatus,
   STATUSES,
   type AdminStudent,
@@ -105,6 +107,8 @@ admin.use("/admin/me", requireAdmin);
 admin.use("/admin/students", requireAdmin);
 admin.use("/admin/students/*", requireAdmin);
 admin.use("/admin/overview", requireAdmin);
+admin.use("/admin/summary", requireAdmin);
+admin.use("/admin/badges", requireAdmin);
 
 admin.get("/admin/me", (c) => c.json({ facebookUserId: c.get("adminId") }));
 
@@ -351,6 +355,65 @@ admin.get("/admin/overview", async (c) => {
       chapterTitle: v.chapter_title,
     })),
     students,
+  };
+  return c.json(body);
+});
+
+// ---------- หน้า "สรุป" + ตัวเลขบนเมนู ----------
+
+const PENDING_Q = "q.hidden = 0 AND q.answered_at IS NULL";
+const INACTIVE_SEC = 7 * 24 * 60 * 60;
+
+admin.get("/admin/badges", async (c) => {
+  const r = await c.env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM questions q WHERE ${PENDING_Q}) AS questions,
+            (SELECT COUNT(*) FROM students WHERE status = 'pending') AS students`,
+  ).first<AdminBadges>();
+  return c.json(r ?? { questions: 0, students: 0 });
+});
+
+admin.get("/admin/summary", async (c) => {
+  const db = c.env.DB;
+  const [counts, latest, approved, inactive] = await db.batch([
+    db.prepare(
+      `SELECT (SELECT COUNT(*) FROM questions q WHERE ${PENDING_Q}) AS questions,
+              (SELECT COUNT(*) FROM students WHERE status = 'pending') AS pending_students,
+              (SELECT COUNT(*) FROM videos v WHERE NOT EXISTS (
+                 SELECT 1 FROM progress p WHERE p.video_id = v.id AND v.duration_sec > 0 AND p.max_position_sec >= v.duration_sec - 10
+               )) AS unfinished`,
+    ),
+    db.prepare(
+      `SELECT s.first_name, s.last_name, v.title AS video_title, q.position_sec, q.body, q.created_at
+       FROM questions q JOIN students s ON s.id = q.student_id JOIN videos v ON v.id = q.video_id
+       WHERE ${PENDING_Q} ORDER BY q.created_at DESC, q.id DESC LIMIT 1`,
+    ),
+    db.prepare("SELECT course, COUNT(*) AS n FROM students WHERE status = 'approved' GROUP BY course"),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS count, SUM(last IS NULL) AS never FROM (
+           SELECT (SELECT MAX(p.last_watched_at) FROM progress p WHERE p.student_id = s.id) AS last
+           FROM students s WHERE s.status = 'approved'
+         ) WHERE last IS NULL OR last < unixepoch() - ?1`,
+      )
+      .bind(INACTIVE_SEC),
+  ]);
+  const n = counts.results[0] as { questions: number; pending_students: number; unfinished: number };
+  const l = latest.results[0] as
+    | { first_name: string; last_name: string; video_title: string; position_sec: number | null; body: string; created_at: number }
+    | undefined;
+  const byCourse = Object.fromEntries((approved.results as { course: string; n: number }[]).map((r) => [r.course, r.n]));
+  const ina = inactive.results[0] as { count: number; never: number | null };
+  const body: AdminSummary = {
+    pendingQuestions: {
+      count: n.questions,
+      latest: l
+        ? { studentName: `${l.first_name} ${l.last_name}`, videoTitle: l.video_title, positionSec: l.position_sec, body: l.body, createdAt: l.created_at }
+        : null,
+    },
+    approved: { m12: byCourse.m12 ?? 0, m4: byCourse.m4 ?? 0 },
+    inactive: { count: ina.count, never: ina.never ?? 0 },
+    pendingStudents: n.pending_students,
+    unfinishedVideos: n.unfinished,
   };
   return c.json(body);
 });

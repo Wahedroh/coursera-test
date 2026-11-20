@@ -78,3 +78,19 @@ export type OverviewStudent = {
   percents: Record<number, number>;
 };
 export type ClassOverview = { videos: OverviewVideo[]; students: OverviewStudent[] };
+
+/** หน้า "สรุป" ของครู */
+export type AdminSummary = {
+  pendingQuestions: {
+    count: number;
+    latest: { studentName: string; videoTitle: string; positionSec: number | null; body: string; createdAt: number } | null;
+  };
+  approved: { m12: number; m4: number };
+  /** ยืนยันแล้วและไม่ได้ดูคลิปเกิน 7 วัน (รวมคนที่ไม่เคยดู) / ไม่เคยดูเลย */
+  inactive: { count: number; never: number };
+  pendingStudents: number;
+  /** คลิปที่ยังไม่มีนักเรียนคนใดดูจบ */
+  unfinishedVideos: number;
+};
+/** ตัวเลขบนเมนูหลังบ้าน */
+export type AdminBadges = { questions: number; students: number };

@@ -22,13 +22,18 @@ export type CloseYearInput = {
 };
 export type CloseYearCounts = { students: number; progress: number; documents: number; announcements: number };
 
-export const BACKUP_VERSION = 4; // 2 = เอกสารเป็นลิงก์ OneDrive, 3 = เพิ่มข้อมูลป้าย "ใหม่", 4 = เพิ่มคำถามใต้คลิป
+export const BACKUP_VERSION = 5; // 2 = เอกสารเป็นลิงก์ OneDrive, 3 = เพิ่มข้อมูลป้าย "ใหม่", 4 = เพิ่มคำถามใต้คลิป, 5 = เห็นคำตอบแล้ว
 /** เวอร์ชันไฟล์สำรองที่กู้คืนได้ (ไฟล์เวอร์ชัน 2 ไม่มีคอลัมน์ใหม่ จะใช้ค่าเริ่มต้นแทน) */
-export const RESTORABLE_VERSIONS = [2, 3, 4];
+export const RESTORABLE_VERSIONS = [2, 3, 4, 5];
 /** ตารางที่ไฟล์สำรองเวอร์ชันเก่าไม่มี (กู้คืนเป็นตารางว่าง) */
 export const BACKUP_TABLES_ADDED: Record<string, number> = { questions: 4 };
 /** ค่าเริ่มต้นของคอลัมน์ที่ไฟล์สำรองเวอร์ชันเก่าไม่มี (เป็นนิพจน์ SQL) */
-export const BACKUP_COLUMN_DEFAULTS: Record<string, string> = { announcements_seen_at: "0", created_at: "unixepoch()" };
+export const BACKUP_COLUMN_DEFAULTS: Record<string, string> = {
+  announcements_seen_at: "0",
+  created_at: "unixepoch()",
+  // ไฟล์เก่า: คำตอบเดิมถือว่าเห็นแล้ว
+  answer_seen_at: "json_extract(value, '$.answered_at')",
+};
 
 /** ตารางและคอลัมน์ที่อยู่ในไฟล์สำรอง JSON (เรียงตามลำดับที่ต้องใส่กลับตอนกู้คืน) */
 export const BACKUP_TABLES = {
@@ -55,7 +60,7 @@ export const BACKUP_TABLES = {
   documents: ["id", "video_id", "kind", "title", "url", "created_at"],
   progress: ["student_id", "video_id", "last_position_sec", "max_position_sec", "watch_seconds", "last_watched_at"],
   announcements: ["id", "target", "title", "body", "created_at", "updated_at"],
-  questions: ["id", "student_id", "video_id", "position_sec", "body", "answer", "answered_at", "hidden", "created_at"],
+  questions: ["id", "student_id", "video_id", "position_sec", "body", "answer", "answered_at", "hidden", "created_at", "answer_seen_at"],
 } as const;
 export type BackupTable = keyof typeof BACKUP_TABLES;
 
