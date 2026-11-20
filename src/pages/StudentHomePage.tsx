@@ -69,20 +69,20 @@ export function StudentHomePage({ me, onAuthError }: Props) {
         ) : null}
 
         {data && data.stats.total > 0 ? (
-          <div className="ph-stats">
-            <button type="button" className="ph-stat" onClick={() => go("/clips")}>
-              <span className="ph-stat__k">
+          <div className="ph-kpis">
+            <button type="button" className="ph-kpi" onClick={() => go("/clips")}>
+              <span className="ph-kpi__k">
                 ดูจบแล้ว <span aria-hidden="true">›</span>
               </span>
-              <span className="ph-stat__v">
+              <span className="ph-kpi__v">
                 {data.stats.done}
                 <small>/{data.stats.total} คลิป</small>
               </span>
-              <span className="ph-stat__s">ทั้งคอร์ส {Math.round((data.stats.done / data.stats.total) * 100)}%</span>
+              <span className="ph-kpi__s">ทั้งคอร์ส {Math.round((data.stats.done / data.stats.total) * 100)}%</span>
             </button>
-            <div className="ph-stat">
-              <span className="ph-stat__k">เวลาเรียน</span>
-              <span className="ph-stat__v">
+            <div className="ph-kpi">
+              <span className="ph-kpi__k">เวลาเรียน</span>
+              <span className="ph-kpi__v">
                 {t.h ? (
                   <>
                     {t.h}
@@ -92,7 +92,7 @@ export function StudentHomePage({ me, onAuthError }: Props) {
                 {t.m}
                 <small> นาที</small>
               </span>
-              <span className="ph-stat__s">7 วันล่าสุด</span>
+              <span className="ph-kpi__s">7 วันล่าสุด</span>
             </div>
           </div>
         ) : null}
@@ -134,21 +134,21 @@ export function StudentHomePage({ me, onAuthError }: Props) {
               <h2>คลิปใหม่</h2>
               <p>{data.newVideos.length} คลิป · เพิ่มใน 7 วันล่าสุด</p>
             </div>
-            <ul className="ph-vlist">
+            <ul className="ph-clist">
               {data.newVideos.map((v) => (
                 <li key={v.id}>
-                  <button type="button" className="ph-vrow" onClick={() => go(`/watch/${v.id}`)}>
-                    <span className="ph-vrow__i" aria-hidden="true">
+                  <button type="button" className="ph-crow" onClick={() => go(`/watch/${v.id}`)}>
+                    <span className="ph-crow__i" aria-hidden="true">
                       ▶
                     </span>
-                    <span className="ph-vrow__b">
-                      <span className="ph-vrow__t">{v.title}</span>
-                      <span className="ph-vrow__m">
+                    <span className="ph-crow__b">
+                      <span className="ph-crow__t">{v.title}</span>
+                      <span className="ph-crow__m">
                         บทที่ {v.chapterNo}
                         {v.durationSec ? ` · ${fmtMin(v.durationSec)}` : ""}
                       </span>
                     </span>
-                    <span className="ph-vrow__s">
+                    <span className="ph-crow__s">
                       <span className="is-new-t">ใหม่</span>
                     </span>
                   </button>

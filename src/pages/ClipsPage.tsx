@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { CourseOutline, CourseVideo } from "../../shared/content";
+import { isInProgress, type CourseOutline, type CourseVideo } from "../../shared/content";
 import { StickerTitle } from "../components/StickerTitle";
 import { StudentShell } from "../components/StudentShell";
 import { api, ApiError } from "../lib/api";
@@ -9,7 +9,7 @@ import { navigate } from "../lib/router";
 type Props = { onAuthError: (status: number) => void };
 
 const isDone = (v: CourseVideo) => v.percent >= 100;
-const isPart = (v: CourseVideo) => !isDone(v) && (v.percent > 0 || v.lastPositionSec > 0);
+const isPart = (v: CourseVideo) => isInProgress(v.percent, v.lastPositionSec);
 
 function VideoRow({ v }: { v: CourseVideo }) {
   const done = isDone(v);
@@ -18,20 +18,20 @@ function VideoRow({ v }: { v: CourseVideo }) {
     <li>
       <button
         type="button"
-        className="ph-vrow"
+        className="ph-crow"
         onClick={() => {
           navigate(`/watch/${v.id}`);
           window.scrollTo(0, 0);
         }}
       >
-        <span className={`ph-vrow__i${done ? " is-done" : part ? " is-part" : ""}`} aria-hidden="true">
+        <span className={`ph-crow__i${done ? " is-done" : part ? " is-part" : ""}`} aria-hidden="true">
           {done ? "✓" : "▶"}
         </span>
-        <span className="ph-vrow__b">
-          <span className="ph-vrow__t">{v.title}</span>
-          <span className="ph-vrow__m">{fmtMin(v.durationSec)}</span>
+        <span className="ph-crow__b">
+          <span className="ph-crow__t">{v.title}</span>
+          <span className="ph-crow__m">{fmtMin(v.durationSec)}</span>
         </span>
-        <span className="ph-vrow__s">
+        <span className="ph-crow__s">
           {done ? (
             <>
               <b className="is-done-t">✓</b>
@@ -45,7 +45,7 @@ function VideoRow({ v }: { v: CourseVideo }) {
           ) : v.isNew ? (
             <span className="is-new-t">ใหม่</span>
           ) : (
-            <span className="is-none">ยังไม่ได้ดู</span>
+            <span className="is-unseen">ยังไม่ได้ดู</span>
           )}
         </span>
       </button>
@@ -114,7 +114,7 @@ export function ClipsPage({ onAuthError }: Props) {
                 <p>{ch.videos.length ? `${ch.videos.length} คลิป · ดูจบ ${done}` : "ยังไม่มีคลิป"}</p>
               </div>
               {ch.videos.length ? (
-                <ul className="ph-vlist">
+                <ul className="ph-clist">
                   {ch.videos.map((v) => (
                     <VideoRow key={v.id} v={v} />
                   ))}

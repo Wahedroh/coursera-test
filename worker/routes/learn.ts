@@ -1,5 +1,5 @@
 import { Hono, type MiddlewareHandler } from "hono";
-import { percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
+import { isInProgress, percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
 import type { HomeData, HomeResume, HomeVideo } from "../../shared/home";
 import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions, type MyQuestions } from "../../shared/questions";
 import type { Course } from "../../shared/validate";
@@ -295,14 +295,15 @@ learn.get("/home", async (c) => {
     chapterCount: chapterSize.get(v.chapter_id)!,
     lastPositionSec: v.last_position_sec ?? 0,
     percent: pct(v),
-    started: v.last_watched_at !== null,
+    started: part(v) || pct(v) >= 100,
   });
+  const part = (v: Row) => isInProgress(pct(v), v.last_position_sec ?? 0);
   const byLatest = (a: Row, b: Row) => (b.last_watched_at ?? 0) - (a.last_watched_at ?? 0);
   const watched = rows.filter((v) => v.last_watched_at !== null).sort(byLatest);
-  const resumeRow =
-    watched.find((v) => pct(v) < 100) ?? rows.find((v) => pct(v) < 100) ?? watched[0] ?? null;
+  // คลิปที่ดูค้างล่าสุด → คลิปแรกที่ยังไม่จบ → (จบหมดแล้ว) คลิปที่ดูล่าสุด
+  const resumeRow = watched.find(part) ?? rows.find((v) => pct(v) < 100) ?? watched[0] ?? null;
   const done = rows.filter((v) => pct(v) >= 100).length;
-  const inProgress = rows.filter((v) => v.last_watched_at !== null && pct(v) < 100).length;
+  const inProgress = rows.filter(part).length;
   const newVideos: HomeVideo[] = rows
     .filter((v) => v.is_new === 1)
     .map((v) => ({ id: v.id, title: v.title, chapterNo: chapterNo.get(v.chapter_id)!, durationSec: v.duration_sec }));

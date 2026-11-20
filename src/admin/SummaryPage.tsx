@@ -93,28 +93,28 @@ export function SummaryPage({ onUnauthorized }: Props) {
   return (
     <section className="ph-admin ph-stack">
       {hero}
-      <div className="ph-stats">
-        <button type="button" className="ph-stat" onClick={() => go("/admin/students?status=approved")}>
-          <span className="ph-stat__k">
+      <div className="ph-kpis">
+        <button type="button" className="ph-kpi" onClick={() => go("/admin/students?status=approved")}>
+          <span className="ph-kpi__k">
             นักเรียนที่ยืนยันแล้ว <span aria-hidden="true">›</span>
           </span>
-          <span className="ph-stat__v">
+          <span className="ph-kpi__v">
             {total}
             <small> คน</small>
           </span>
-          <span className="ph-stat__s">
+          <span className="ph-kpi__s">
             ม.1&amp;2 {s.approved.m12} · ม.4 {s.approved.m4}
           </span>
         </button>
-        <button type="button" className="ph-stat" onClick={() => go("/admin/overview?filter=inactive")}>
-          <span className="ph-stat__k">
+        <button type="button" className="ph-kpi" onClick={() => go("/admin/overview?filter=inactive")}>
+          <span className="ph-kpi__k">
             ไม่เข้าเรียนเกิน 7 วัน <span aria-hidden="true">›</span>
           </span>
-          <span className="ph-stat__v" style={s.inactive.count ? { color: "var(--orange)" } : undefined}>
+          <span className="ph-kpi__v" style={s.inactive.count ? { color: "var(--orange)" } : undefined}>
             {s.inactive.count}
             <small> คน</small>
           </span>
-          <span className="ph-stat__s">ยังไม่เคยดูเลย {s.inactive.never} คน</span>
+          <span className="ph-kpi__s">ยังไม่เคยดูเลย {s.inactive.never} คน</span>
         </button>
       </div>
       {s.pendingStudents > 0 || s.unfinishedVideos > 0 ? (

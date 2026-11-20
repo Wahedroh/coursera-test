@@ -2030,12 +2030,12 @@ a.ph-btn {
 }
 
 /* การ์ดตัวเลข */
-.ph-stats {
+.ph-kpis {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-.ph-stat {
+.ph-kpi {
   display: grid;
   gap: 2px;
   padding: 12px 14px;
@@ -2047,26 +2047,26 @@ a.ph-btn {
   text-align: left;
   box-shadow: var(--card-shadow);
 }
-button.ph-stat {
+button.ph-kpi {
   cursor: pointer;
 }
-.ph-stat__k {
+.ph-kpi__k {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   font-weight: 700;
 }
-.ph-stat__v {
+.ph-kpi__v {
   font-size: 26px;
   font-weight: 900;
   line-height: 1.15;
 }
-.ph-stat__v small {
+.ph-kpi__v small {
   color: #50607a;
   font-size: 15px;
   font-weight: 700;
 }
-.ph-stat__s {
+.ph-kpi__s {
   color: #50607a;
   font-size: 12px;
 }
@@ -2145,14 +2145,14 @@ button.ph-stat {
   font-size: 13px;
   opacity: 0.85;
 }
-.ph-vlist {
+.ph-clist {
   display: grid;
   gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.ph-vrow {
+.ph-crow {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2167,7 +2167,7 @@ button.ph-stat {
   box-shadow: var(--card-shadow);
   cursor: pointer;
 }
-.ph-vrow__i {
+.ph-crow__i {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -2178,30 +2178,30 @@ button.ph-stat {
   color: #fff;
   font-size: 14px;
 }
-.ph-vrow__i.is-done {
+.ph-crow__i.is-done {
   background: #2e7d32;
 }
-.ph-vrow__i.is-part {
+.ph-crow__i.is-part {
   background: #fff;
   color: var(--orange);
   box-shadow: inset 0 0 0 4px var(--orange);
 }
-.ph-vrow__b {
+.ph-crow__b {
   display: grid;
   flex: 1;
   gap: 2px;
   min-width: 0;
 }
-.ph-vrow__t {
+.ph-crow__t {
   font-size: 15px;
   font-weight: 700;
   line-height: 1.3;
 }
-.ph-vrow__m {
+.ph-crow__m {
   color: #50607a;
   font-size: 12px;
 }
-.ph-vrow__s {
+.ph-crow__s {
   display: grid;
   flex: 0 0 auto;
   gap: 1px;
@@ -2209,11 +2209,11 @@ button.ph-stat {
   font-size: 12px;
   font-weight: 700;
 }
-.ph-vrow__s b {
+.ph-crow__s b {
   font-size: 16px;
   font-weight: 800;
 }
-.ph-vrow__s .is-part {
+.ph-crow__s .is-part {
   color: var(--orange);
 }
 .is-done-t {
@@ -2222,7 +2222,7 @@ button.ph-stat {
 .is-new-t {
   color: #a87700;
 }
-.is-none {
+.is-unseen {
   color: #8a96a8;
   font-weight: 600;
 }
