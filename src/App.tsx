@@ -15,7 +15,7 @@ import { WatchPage } from "./pages/WatchPage";
 type Auth = { state: "loading" } | { state: "guest"; notice?: string } | { state: "student"; me: Me };
 
 const KICKED = "บัญชีนี้ถูกเข้าใช้จากเครื่องอื่น หรือหมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่";
-const GUEST_PATHS = ["/login", "/register", "/register/facebook"];
+const GUEST_PATHS = ["/login", "/register"];
 const WATCH_PATH = /^\/watch\/(\d+)$/;
 /** หน้าที่นักเรียนแต่ละสถานะเปิดได้ (นอกจากหน้าดูคลิป) */
 const APPROVED_PATHS = ["/", "/clips", "/questions", "/account", "/account/password"];
@@ -100,8 +100,6 @@ export function App() {
     page =
       path === "/register" ? (
         <RegisterPage onRegistered={signedIn} />
-      ) : path === "/register/facebook" ? (
-        <RegisterPage mode="facebook" onRegistered={signedIn} />
       ) : (
         <LoginPage notice={auth.notice} onLogin={signedIn} />
       );

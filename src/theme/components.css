@@ -478,10 +478,6 @@ a.ph-btn {
 .ph-btn--sm.ph-btn--ghost {
   box-shadow: none;
 }
-.ph-btn--fb {
-  background: #1877f2;
-  box-shadow: 0 5px 0 #0b4fa8;
-}
 .ph-btn--ok {
   background: #2e7d32;
   box-shadow: 0 3px 0 #1b5e20;
@@ -1353,23 +1349,6 @@ a.ph-btn {
     font-weight: 600;
     color: #50607a;
   }
-}
-
-/* เส้นคั่น "หรือ ..." ระหว่างปุ่ม Facebook กับฟอร์ม */
-.ph-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  color: #50607a;
-  font-size: 15px;
-}
-.ph-divider::before,
-.ph-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #c9d3e0;
 }
 
 /* ---------- หน้าข้อมูล (หลังบ้าน) ---------- */
