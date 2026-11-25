@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import {
   ADMIN_PAGE_SIZE,
   type AdminBadges,
@@ -15,7 +14,6 @@ import {
 import { percentOf } from "../../shared/content";
 import { isCourse, PASSWORD_MAX, PASSWORD_MIN, type StudentStatus } from "../../shared/validate";
 import {
-  adminIds,
   checkAdminPassword,
   endAdminSession,
   passwordIdentity,
@@ -23,58 +21,10 @@ import {
   startAdminSession,
   type AdminVars,
 } from "../lib/adminSession";
-import { facebookAuthUrl, facebookConfigured, facebookUserFromCode } from "../lib/facebook";
 import { hashPassword } from "../lib/password";
 import { clearFailures, clientIp, isLocked, LOCKED_MESSAGE, recordFailure } from "../lib/throttle";
-import { randomToken } from "../lib/session";
-
-const STATE_COOKIE = "fb_admin_state";
 
 export const admin = new Hono<{ Bindings: Env; Variables: AdminVars }>();
-
-const callbackUrl = (reqUrl: string) => `${new URL(reqUrl).origin}/api/admin/auth/callback`;
-
-// ---------- เข้าสู่ระบบด้วย Facebook ----------
-
-admin.get("/admin/auth/facebook", (c) => {
-  // ADMIN_FACEBOOK_IDS ว่างได้: เข้าครั้งแรกเพื่อดู ID ของตัวเอง
-  if (!facebookConfigured(c.env)) return c.redirect("/admin/login?error=config");
-  const state = randomToken();
-  setCookie(c, STATE_COOKIE, state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Lax",
-    path: "/api/admin/auth",
-    maxAge: 600,
-  });
-  return c.redirect(facebookAuthUrl(c.env, callbackUrl(c.req.url), state));
-});
-
-admin.get("/admin/auth/callback", async (c) => {
-  const expected = getCookie(c, STATE_COOKIE);
-  deleteCookie(c, STATE_COOKIE, { path: "/api/admin/auth", secure: true });
-  if (c.req.query("error")) return c.redirect("/admin/login?error=cancelled");
-
-  const code = c.req.query("code");
-  const state = c.req.query("state");
-  if (!code || !state || !expected || state !== expected) return c.redirect("/admin/login?error=failed");
-  if (!facebookConfigured(c.env)) return c.redirect("/admin/login?error=config");
-
-  let fbId: string;
-  try {
-    fbId = (await facebookUserFromCode(c.env, code, callbackUrl(c.req.url))).id;
-  } catch (err) {
-    console.error(err);
-    return c.redirect("/admin/login?error=failed");
-  }
-
-  // ยังไม่อยู่ในรายชื่อครู: แสดง ID ให้นำไปใส่ใน ADMIN_FACEBOOK_IDS
-  if (!adminIds(c.env).includes(fbId)) {
-    return c.redirect(`/admin/login?error=denied&id=${encodeURIComponent(fbId)}`);
-  }
-  await startAdminSession(c, fbId);
-  return c.redirect("/admin");
-});
 
 // ---------- เข้าสู่ระบบด้วยรหัสผ่าน ----------
 
@@ -110,7 +60,7 @@ admin.use("/admin/overview", requireAdmin);
 admin.use("/admin/summary", requireAdmin);
 admin.use("/admin/badges", requireAdmin);
 
-admin.get("/admin/me", (c) => c.json({ facebookUserId: c.get("adminId") }));
+admin.get("/admin/me", (c) => c.json({ ok: true }));
 
 type Row = {
   id: number;

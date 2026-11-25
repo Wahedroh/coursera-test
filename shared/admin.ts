@@ -24,7 +24,7 @@ export type AdminStudent = {
   status: StudentStatus;
   /** unix seconds */
   createdAt: number;
-  /** ตั้งรหัสผ่านไว้หรือยัง (นักเรียนที่สมัครด้วย Facebook ยังไม่มี) */
+  /** ตั้งรหัสผ่านไว้หรือยัง (บัญชีเก่าที่เคยสมัครด้วย Facebook อาจยังไม่มี) */
   hasPassword: boolean;
 };
 

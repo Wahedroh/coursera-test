@@ -61,13 +61,12 @@ function csvResponse(name: string, header: string[], rows: unknown[][]): Respons
 
 maintenance.get("/admin/backup/students.csv", async (c) => {
   const { results } = await c.env.DB.prepare(
-    `SELECT id, first_name, last_name, school, student_phone, parent_phone, course, status, academic_year, created_at,
-            (SELECT COUNT(*) FROM oauth_accounts o WHERE o.student_id = s.id) AS fb
+    `SELECT id, first_name, last_name, school, student_phone, parent_phone, course, status, academic_year, created_at
      FROM students s ORDER BY course, academic_year, first_name`,
   ).all<Record<string, string | number>>();
   return csvResponse(
     `รายชื่อนักเรียน-${today()}.csv`,
-    ["รหัส", "ชื่อ", "นามสกุล", "โรงเรียน", "เบอร์นักเรียน", "เบอร์ผู้ปกครอง", "คอร์ส", "สถานะ", "ปีการศึกษา", "สมัครเมื่อ", "เข้าด้วย Facebook"],
+    ["รหัส", "ชื่อ", "นามสกุล", "โรงเรียน", "เบอร์นักเรียน", "เบอร์ผู้ปกครอง", "คอร์ส", "สถานะ", "ปีการศึกษา", "สมัครเมื่อ"],
     results.map((r) => [
       r.id,
       r.first_name,
@@ -79,7 +78,6 @@ maintenance.get("/admin/backup/students.csv", async (c) => {
       STATUS_TH[r.status as string],
       r.academic_year,
       fmtTime(r.created_at as number),
-      r.fb ? "ใช่" : "",
     ]),
   );
 });
@@ -291,7 +289,7 @@ maintenance.post("/admin/close-year", async (c) => {
   const d = docFilter(input);
 
   const stmts: D1PreparedStatement[] = [
-    // ลบนักเรียน → ประวัติ, session, บัญชี Facebook ที่ผูกไว้ ถูกลบตาม (ON DELETE CASCADE)
+    // ลบนักเรียน → ประวัติ, session, คำถาม ถูกลบตาม (ON DELETE CASCADE)
     db
       .prepare(`DELETE FROM students WHERE academic_year = ?1 AND course IN (${inList(input.courses.length, 2)})`)
       .bind(input.year, ...input.courses),

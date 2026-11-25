@@ -9,4 +9,4 @@ export const SITE_OWNER = "เพจ เรียนฟิสิกส์ : Phys
 export const FACEBOOK_PAGE_URL = "";
 
 /** วันที่ประกาศ / แก้ไขล่าสุดของนโยบายและข้อตกลง */
-export const LEGAL_UPDATED = "8 พฤศจิกายน 2569";
+export const LEGAL_UPDATED = "25 พฤศจิกายน 2569";

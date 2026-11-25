@@ -7,7 +7,7 @@ import { navigate } from "../lib/router";
 
 type Props = { backTo: string; onAuthError: () => void };
 
-/** นักเรียนเปลี่ยนรหัสผ่านเอง (สมัครด้วย Facebook และยังไม่มีรหัส → ตั้งรหัสใหม่ได้เลย) */
+/** นักเรียนเปลี่ยนรหัสผ่านเอง (บัญชีที่ยังไม่มีรหัส → ตั้งรหัสใหม่ได้เลย) */
 export function AccountPage({ backTo, onAuthError }: Props) {
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [current, setCurrent] = useState("");
@@ -85,7 +85,7 @@ export function AccountPage({ backTo, onAuthError }: Props) {
           ) : hasPassword === null ? null : (
             <form className="ph-form" onSubmit={submit} noValidate>
               {hasPassword === false ? (
-                <p className="ph-alert">บัญชีนี้สมัครด้วย Facebook ตั้งรหัสผ่านไว้เพื่อเข้าด้วยเบอร์นักเรียนได้อีกทาง</p>
+                <p className="ph-alert">บัญชีนี้ยังไม่มีรหัสผ่าน ตั้งรหัสผ่านไว้เพื่อเข้าด้วยเบอร์นักเรียน</p>
               ) : (
                 field("current", "รหัสผ่านเดิม", current, setCurrent, "current-password")
               )}

@@ -44,15 +44,13 @@ export const auth = new Hono<{ Bindings: Env }>();
 
 // สมัครด้วยเบอร์นักเรียน + รหัสผ่าน แล้วเข้าสู่ระบบทันที (สถานะ "รอยืนยัน")
 /**
- * สร้างนักเรียนใหม่ + จำชื่อโรงเรียน (ใช้ทั้งสมัครด้วยรหัสผ่าน และสมัครด้วย Facebook)
- * extra = คำสั่งเพิ่มเติมที่ต้องทำใน transaction เดียวกัน (เช่น ผูกบัญชี Facebook)
+ * สร้างนักเรียนใหม่ + จำชื่อโรงเรียน
  * คืน null ถ้าเบอร์นักเรียนซ้ำ
  */
 export async function insertStudent(
   db: D1Database,
   data: RegisterInput,
-  passwordHash: string | null,
-  extra: D1PreparedStatement[] = [],
+  passwordHash: string,
 ): Promise<StudentRow | null> {
   const taken = await db.prepare("SELECT 1 FROM students WHERE student_phone = ?1").bind(data.studentPhone).first();
   if (taken) return null;
@@ -66,7 +64,6 @@ export async function insertStudent(
         )
         .bind(data.firstName, data.lastName, data.school, data.studentPhone, data.parentPhone, data.course, passwordHash, academicYear()),
       db.prepare("INSERT OR IGNORE INTO schools (name) VALUES (?1)").bind(data.school),
-      ...extra,
     ]);
     const row = inserted.results[0];
     if (!row) throw new Error("insert returned no row");
@@ -129,7 +126,7 @@ auth.get("/me", async (c) => {
   return c.json(toMe(row));
 });
 
-// นักเรียนเปลี่ยนรหัสผ่านเอง: มีรหัสเดิมต้องใส่รหัสเดิม (สมัครด้วย Facebook ยังไม่มีรหัส → ตั้งใหม่ได้เลย)
+// นักเรียนเปลี่ยนรหัสผ่านเอง: มีรหัสเดิมต้องใส่รหัสเดิม (ยังไม่มีรหัส → ตั้งใหม่ได้เลย)
 auth.get("/auth/password", async (c) => {
   const id = await currentStudentId(c);
   if (id === null) return c.json({ error: "unauthorized" }, 401);
