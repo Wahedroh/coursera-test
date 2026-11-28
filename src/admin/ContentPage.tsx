@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
+  COURSE_DOC_TARGETS,
   DOC_KINDS,
   DOC_TITLE_MAX,
   isOneDriveUrl,
@@ -7,6 +8,7 @@ import {
   type AdminChapter,
   type AdminContent,
   type AdminVideo,
+  type CourseDocTarget,
   type DocKind,
 } from "../../shared/content";
 import { COURSES, type Course } from "../../shared/validate";
@@ -81,6 +83,8 @@ export function ContentPage({ onUnauthorized }: Props) {
           {error}
         </p>
       ) : null}
+
+      {data ? <CourseDocsPanel key={course} course={course} data={data} run={run} /> : null}
 
       {data && data.chapters.length === 0 ? <p className="ph-empty">ยังไม่มีบทในคอร์สนี้ เริ่มจากเพิ่มบทด้านล่าง</p> : null}
 
@@ -350,5 +354,96 @@ function DocsPanel({ v, run }: { v: AdminVideo; run: Run }) {
         <p className="ph-small ph-m0">ใน OneDrive กด "แชร์" แล้วตั้งเป็น "ทุกคนที่มีลิงก์ดูได้" ก่อนคัดลอกลิงก์มาวาง</p>
       </form>
     </div>
+  );
+}
+
+/** เอกสารเรียนของคอร์ส (ลิงก์ OneDrive ไม่ผูกกับคลิป): ม.1&2 / ม.4 / ทุกคอร์ส */
+function CourseDocsPanel({ course, data, run }: { course: Course; data: AdminContent; run: Run }) {
+  const [target, setTarget] = useState<CourseDocTarget>(course);
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const add = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return setErr("กรุณาตั้งชื่อเอกสาร");
+    if (!isOneDriveUrl(url)) return setErr("ต้องเป็นลิงก์ OneDrive (https://1drv.ms/… หรือ onedrive.live.com)");
+    setErr("");
+    setBusy(true);
+    const ok = await run("/admin/course-docs", { course, target, title, url: url.trim() });
+    setBusy(false);
+    if (ok) {
+      setTitle("");
+      setUrl("");
+    }
+  };
+
+  return (
+    <section className="ph-card ph-cdocs" aria-labelledby="cdocs-h">
+      <h2 id="cdocs-h" className="ph-cdocs__h">
+        📄 เอกสารเรียนของคอร์ส
+      </h2>
+      <p className="ph-small ph-m0">นักเรียนเห็นบนสุดของหน้า "คลิปทั้งหมด" (ไม่ผูกกับคลิปใดคลิปหนึ่ง)</p>
+      <div className="ph-docs">
+        {data.courseDocs.length === 0 ? <p className="ph-small ph-m0">ยังไม่มีเอกสารของ{COURSES[course]}</p> : null}
+        <ul className="ph-docs__list">
+          {data.courseDocs.map((d) => (
+            <li key={d.id} className="ph-docs__item">
+              <span className={`ph-badge ${d.target === "all" ? "ph-badge--approved" : "ph-badge--pending"}`}>
+                {COURSE_DOC_TARGETS[d.target]}
+              </span>
+              <a href={d.url} target="_blank" rel="noopener noreferrer" className="ph-docs__name">
+                {d.title}
+              </a>
+              <button
+                type="button"
+                className="ph-btn ph-btn--sm ph-btn--danger"
+                onClick={() => {
+                  const who = d.target === "all" ? " (ทุกคอร์สจะไม่เห็นแล้ว)" : "";
+                  if (window.confirm(`ลบลิงก์เอกสาร "${d.title}"?${who}`)) run(`/admin/course-docs/${d.id}/delete`, { course });
+                }}
+              >
+                ลบ
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form className="ph-docs__form" onSubmit={add}>
+          <select
+            className="ph-input ph-select ph-select--sm"
+            aria-label="ให้คอร์สไหนเห็น"
+            value={target}
+            onChange={(e) => setTarget(e.target.value as CourseDocTarget)}
+          >
+            {(["m12", "m4", "all"] as CourseDocTarget[]).map((t) => (
+              <option key={t} value={t}>
+                {COURSE_DOC_TARGETS[t]}
+              </option>
+            ))}
+          </select>
+          <input
+            className="ph-input ph-docs__title"
+            aria-label="ชื่อเอกสาร"
+            placeholder="ชื่อเอกสาร เช่น ชีทสรุปสูตรทั้งเทอม"
+            maxLength={DOC_TITLE_MAX}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <input
+            className="ph-input ph-docs__url"
+            aria-label="ลิงก์ OneDrive"
+            placeholder="ลิงก์ OneDrive เช่น https://1drv.ms/b/…"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button type="submit" className="ph-btn ph-btn--sm" disabled={busy}>
+            เพิ่มเอกสาร
+          </button>
+          {err ? <p className="ph-error">{err}</p> : null}
+          <p className="ph-small ph-m0">ใน OneDrive กด "แชร์" แล้วตั้งเป็น "ทุกคนที่มีลิงก์ดูได้" ก่อนคัดลอกลิงก์มาวาง</p>
+        </form>
+      </div>
+    </section>
   );
 }
