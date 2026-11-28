@@ -168,7 +168,7 @@ maintenance.post("/admin/restore", async (c) => {
   const db = c.env.DB;
   const stmts: D1PreparedStatement[] = [
     // ลูกก่อนแม่
-    ...["sessions", "oauth_pending", "watch_daily", "questions", "progress", "documents", "videos", "chapters", "oauth_accounts", "students", "schools", "announcements"].map(
+    ...["sessions", "oauth_pending", "course_docs", "watch_daily", "questions", "progress", "documents", "videos", "chapters", "oauth_accounts", "students", "schools", "announcements"].map(
       (t) => db.prepare(`DELETE FROM ${t}`),
     ),
   ];
@@ -253,10 +253,15 @@ function docFilter(input: CloseInput) {
   };
 }
 
+/** "ลบเอกสารทั้งหมด" ลบเอกสารเรียนของคอร์สด้วย (เลือกทุกคอร์ส = รวมเอกสาร "ทุกคอร์ส") */
+const courseDocTargets = (input: CloseInput): string[] =>
+  input.docs === "all" ? (input.courses.length === 2 ? [...input.courses, "all"] : input.courses) : [];
+
 async function countClose(db: D1Database, input: CloseInput): Promise<CloseYearCounts> {
   const sIn = inList(input.courses.length, 2);
   const d = docFilter(input);
-  const [s, p, docs, a] = await db.batch<{ n: number }>([
+  const t = courseDocTargets(input);
+  const [s, p, docs, a, cd] = await db.batch<{ n: number }>([
     db.prepare(`SELECT COUNT(*) AS n FROM students WHERE academic_year = ?1 AND course IN (${sIn})`).bind(input.year, ...input.courses),
     db
       .prepare(
@@ -265,11 +270,14 @@ async function countClose(db: D1Database, input: CloseInput): Promise<CloseYearC
       .bind(input.year, ...input.courses),
     db.prepare(`SELECT COUNT(*) AS n ${d.sql}`).bind(...d.args),
     db.prepare("SELECT COUNT(*) AS n FROM announcements"),
+    t.length
+      ? db.prepare(`SELECT COUNT(*) AS n FROM course_docs WHERE target IN (${inList(t.length, 1)})`).bind(...t)
+      : db.prepare("SELECT 0 AS n"),
   ]);
   return {
     students: s.results[0].n,
     progress: p.results[0].n,
-    documents: input.docs === "none" ? 0 : docs.results[0].n,
+    documents: input.docs === "none" ? 0 : docs.results[0].n + cd.results[0].n,
     announcements: input.announcements ? a.results[0].n : 0,
   };
 }
@@ -295,6 +303,8 @@ maintenance.post("/admin/close-year", async (c) => {
       .bind(input.year, ...input.courses),
   ];
   if (input.docs !== "none") stmts.push(db.prepare(`DELETE FROM documents WHERE id IN (SELECT d.id ${d.sql})`).bind(...d.args));
+  const t = courseDocTargets(input);
+  if (t.length) stmts.push(db.prepare(`DELETE FROM course_docs WHERE target IN (${inList(t.length, 1)})`).bind(...t));
   if (input.announcements) stmts.push(db.prepare("DELETE FROM announcements"));
   await db.batch(stmts);
   return c.json({ ok: true, deleted: counts });

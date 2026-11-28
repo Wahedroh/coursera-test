@@ -2318,3 +2318,16 @@ body.has-tabbar .ph-footer {
     white-space: nowrap;
   }
 }
+
+/* ---------- เอกสารเรียนของคอร์ส ---------- */
+.ph-cdocs,
+.ph-cdocs-s {
+  display: grid;
+  gap: 10px;
+}
+.ph-cdocs__h {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--navy-d);
+}

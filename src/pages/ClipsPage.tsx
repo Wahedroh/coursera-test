@@ -84,6 +84,25 @@ export function ClipsPage({ onAuthError }: Props) {
             {error}
           </p>
         ) : null}
+        {data && data.courseDocs.length > 0 ? (
+          <section className="ph-card ph-cdocs-s" aria-labelledby="cdocs-s-h">
+            <h2 id="cdocs-s-h" className="ph-cdocs__h">
+              📄 เอกสารเรียน
+            </h2>
+            <div className="ph-dl">
+              {data.courseDocs.map((d) => (
+                <a key={d.id} className="ph-dl__btn" href={d.url} target="_blank" rel="noopener noreferrer">
+                  <span className="ph-dl__icon" aria-hidden="true">
+                    ↗
+                  </span>
+                  <span className="ph-dl__text">
+                    <span className="ph-bold">{d.title}</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
         {data && data.chapters.length === 0 ? <p className="ph-empty">ยังไม่มีคลิปในคอร์สนี้</p> : null}
         {data?.chapters.map((ch, ci) => {
           const done = ch.videos.filter(isDone).length;

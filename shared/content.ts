@@ -63,7 +63,13 @@ export type AdminVideo = {
   documents: DocumentInfo[];
 };
 export type AdminChapter = { id: number; title: string; videos: AdminVideo[] };
-export type AdminContent = { course: Course; chapters: AdminChapter[] };
+/** เอกสารเรียนของคอร์ส (ไม่ผูกกับคลิป) */
+export type CourseDocTarget = "all" | Course;
+export const COURSE_DOC_TARGETS: Record<CourseDocTarget, string> = { m12: "ม.1&2", m4: "ม.4", all: "ทุกคอร์ส" };
+export const isCourseDocTarget = (v: unknown): v is CourseDocTarget => v === "all" || v === "m12" || v === "m4";
+export type CourseDoc = { id: number; target: CourseDocTarget; title: string; url: string };
+
+export type AdminContent = { course: Course; chapters: AdminChapter[]; courseDocs: CourseDoc[] };
 
 // ---------- ฝั่งนักเรียน ----------
 
@@ -81,6 +87,8 @@ export type CourseChapter = { id: number; title: string; videos: CourseVideo[] }
 export type CourseOutline = {
   course: Course;
   chapters: CourseChapter[];
+  /** เอกสารเรียนของคอร์สนี้ + ทุกคอร์ส */
+  courseDocs: CourseDoc[];
   /** คลิปที่ดูล่าสุด (สำหรับปุ่มเรียนต่อ) */
   resume: { videoId: number; title: string; lastPositionSec: number; percent: number } | null;
 };

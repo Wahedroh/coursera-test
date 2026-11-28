@@ -1,5 +1,5 @@
 import { Hono, type MiddlewareHandler } from "hono";
-import { isInProgress, percentOf, type CourseChapter, type CourseOutline, type WatchVideo } from "../../shared/content";
+import { isInProgress, percentOf, type CourseChapter, type CourseDoc, type CourseOutline, type WatchVideo } from "../../shared/content";
 import type { HomeData, HomeResume, HomeVideo } from "../../shared/home";
 import { QUESTION_MAX, QUESTIONS_PER_DAY, type ClipQuestion, type ClipQuestions, type MyQuestions } from "../../shared/questions";
 import type { Course } from "../../shared/validate";
@@ -47,7 +47,7 @@ const NEW_VIDEO_SEC = 7 * 24 * 60 * 60;
 
 learn.get("/course", async (c) => {
   const course = c.get("course");
-  const [ch, vi] = await c.env.DB.batch([
+  const [ch, vi, docs] = await c.env.DB.batch([
     c.env.DB.prepare("SELECT id, title FROM chapters WHERE course = ?1 ORDER BY sort_order, id").bind(course),
     c.env.DB.prepare(
       `SELECT v.id, v.chapter_id, c.title AS chapter_title, v.title, v.duration_sec,
@@ -57,6 +57,8 @@ learn.get("/course", async (c) => {
        LEFT JOIN progress p ON p.video_id = v.id AND p.student_id = ?2
        WHERE c.course = ?1 ORDER BY v.sort_order, v.id`,
     ).bind(course, c.get("studentId")),
+    // เอกสารเรียนของคอร์สนี้ + ทุกคอร์ส
+    c.env.DB.prepare("SELECT id, target, title, url FROM course_docs WHERE target IN ('all', ?1) ORDER BY id").bind(course),
   ]);
   const chapters: CourseChapter[] = (ch.results as { id: number; title: string }[]).map((x) => ({ ...x, videos: [] }));
   const byId = new Map(chapters.map((x) => [x.id, x]));
@@ -78,7 +80,7 @@ learn.get("/course", async (c) => {
       resume = { videoId: v.id, title: v.title, lastPositionSec: last, percent };
     }
   }
-  const body: CourseOutline = { course, chapters, resume };
+  const body: CourseOutline = { course, chapters, courseDocs: docs.results as CourseDoc[], resume };
   return c.json(body);
 });
 

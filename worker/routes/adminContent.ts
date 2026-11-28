@@ -3,6 +3,8 @@ import {
   DOC_TITLE_MAX,
   isDocKind,
   isOneDriveUrl,
+  isCourseDocTarget,
+  type CourseDoc,
   parseYouTubeId,
   TITLE_MAX,
   type AdminChapter,
@@ -22,6 +24,8 @@ adminContent.use("/admin/chapters/*", requireAdmin);
 adminContent.use("/admin/videos", requireAdmin);
 adminContent.use("/admin/videos/*", requireAdmin);
 adminContent.use("/admin/documents/*", requireAdmin);
+adminContent.use("/admin/course-docs", requireAdmin);
+adminContent.use("/admin/course-docs/*", requireAdmin);
 
 async function readJson(req: Request): Promise<Record<string, unknown>> {
   const v = await req.json().catch(() => null);
@@ -36,9 +40,10 @@ const cleanTitle = (v: unknown): string | null => {
   return t && t.length <= TITLE_MAX ? t : null;
 };
 const bad = (message: string) => ({ error: "validation", message });
+export const COURSE_DOC_COLUMNS = "id, target, title, url";
 
 async function loadContent(db: D1Database, course: Course): Promise<AdminContent> {
-  const [ch, vi, docs] = await db.batch([
+  const [ch, vi, docs, cdocs] = await db.batch([
     db.prepare("SELECT id, title FROM chapters WHERE course = ?1 ORDER BY sort_order, id").bind(course),
     db
       .prepare(
@@ -52,6 +57,7 @@ async function loadContent(db: D1Database, course: Course): Promise<AdminContent
          JOIN chapters c ON c.id = v.chapter_id WHERE c.course = ?1 ORDER BY ${DOC_ORDER}`,
       )
       .bind(course),
+    db.prepare(`SELECT ${COURSE_DOC_COLUMNS} FROM course_docs WHERE target IN ('all', ?1) ORDER BY id`).bind(course),
   ]);
   const chapters: AdminChapter[] = (ch.results as { id: number; title: string }[]).map((c) => ({ ...c, videos: [] }));
   const byId = new Map(chapters.map((c) => [c.id, c]));
@@ -62,7 +68,7 @@ async function loadContent(db: D1Database, course: Course): Promise<AdminContent
     byId.get(v.chapter_id)?.videos.push(video);
   }
   for (const d of docs.results as DocRow[]) videos.get(d.video_id)?.documents.push(toDocInfo(d));
-  return { course, chapters };
+  return { course, chapters, courseDocs: cdocs.results as CourseDoc[] };
 }
 
 async function chapterCourse(db: D1Database, chapterId: number): Promise<Course | null> {
@@ -218,4 +224,27 @@ adminContent.post("/admin/documents/:id/delete", async (c) => {
     .first<{ chapter_id: number }>();
   if (!row) return c.json({ error: "not_found" }, 404);
   return c.json(await loadContent(c.env.DB, (await chapterCourse(c.env.DB, row.chapter_id))!));
+});
+
+// ---------- เอกสารเรียนของคอร์ส (ไม่ผูกกับคลิป) ----------
+// body.course = แท็บคอร์สที่ครูเปิดอยู่ (คืนเนื้อหาของคอร์สนั้นกลับไป)
+
+adminContent.post("/admin/course-docs", async (c) => {
+  const b = await readJson(c.req.raw);
+  const title = typeof b.title === "string" ? b.title.trim().replace(/\s+/g, " ") : "";
+  const url = typeof b.url === "string" ? b.url.trim() : "";
+  if (!isCourse(String(b.course ?? "")) || !isCourseDocTarget(b.target)) return c.json(bad("ข้อมูลไม่ถูกต้อง"), 400);
+  if (!title) return c.json(bad("กรุณาตั้งชื่อเอกสาร"), 400);
+  if (title.length > DOC_TITLE_MAX) return c.json(bad("ชื่อเอกสารยาวเกินไป"), 400);
+  if (!isOneDriveUrl(url) || url.length > 2000) return c.json(bad("ต้องเป็นลิงก์ OneDrive (https://1drv.ms/… หรือ onedrive.live.com)"), 400);
+  await c.env.DB.prepare("INSERT INTO course_docs (target, title, url) VALUES (?1, ?2, ?3)").bind(b.target, title, url).run();
+  return c.json(await loadContent(c.env.DB, b.course as Course));
+});
+
+adminContent.post("/admin/course-docs/:id/delete", async (c) => {
+  const id = posInt(c.req.param("id"));
+  const b = await readJson(c.req.raw);
+  if (!id || !isCourse(String(b.course ?? ""))) return c.json(bad("ข้อมูลไม่ถูกต้อง"), 400);
+  await c.env.DB.prepare("DELETE FROM course_docs WHERE id = ?1").bind(id).run();
+  return c.json(await loadContent(c.env.DB, b.course as Course));
 });
